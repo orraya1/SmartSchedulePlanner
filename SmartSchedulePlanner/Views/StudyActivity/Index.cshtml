@@ -1,0 +1,81 @@
+﻿@model IEnumerable<SmartSchedulePlanner.Models.StudyActivity>
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<h2>Study Activities</h2>
+
+<p>
+    <a asp-action="Create" class="btn btn-success">
+        + เพิ่มกิจกรรม
+    </a>
+</p>
+
+<table class="table table-bordered">
+
+    <thead>
+        <tr>
+            <th>ชื่อกิจกรรม</th>
+            <th>วันที่</th>
+            <th>เวลา</th>
+            <th>จัดการ</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        @foreach (var item in Model)
+        {
+            <tr>
+
+                <td>@item.ActivityName</td>
+
+                <td>
+                    @item.StartDate.ToShortDateString()
+                    -
+                    @item.EndDate.ToShortDateString()
+                </td>
+
+                <td>
+                    @item.DailyStartTime
+                    -
+                    @item.DailyEndTime
+                </td>
+
+                <td>
+
+                    <div class="btn-group">
+
+                        <a asp-action="Details"
+                           asp-route-id="@item.Id"
+                           class="btn btn-outline-primary">
+
+                            รายละเอียด
+
+                        </a>
+
+                        <a asp-controller="StudySubject"
+                           asp-action="Index"
+                           asp-route-id="@item.Id"
+                           class="btn btn-success">
+
+                            จัดการวิชา
+
+                        </a>
+                        <a asp-action="Delete"
+                           asp-route-id="@item.Id"
+                           class="btn btn-danger btn-sm">
+                            ลบ
+                        </a>
+
+                    </div>
+
+                </td>
+
+            </tr>
+        }
+
+    </tbody>
+
+</table>

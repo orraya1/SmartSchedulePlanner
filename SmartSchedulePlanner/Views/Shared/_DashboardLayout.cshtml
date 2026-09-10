@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"]</title>
+
+    <link rel="stylesheet" href="~/css/dashboard.css" />
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+</head>
+
+<body>
+
+    <div class="sidebar">
+
+        <h2>Planner</h2>
+
+        <a asp-controller="Dashboard" asp-action="Index">
+            <i class="fa fa-home"></i> Dashboard
+        </a>
+
+        <a asp-controller="StudyActivity" asp-action="Index">
+            <i class="fa fa-book"></i> Study Activities
+        </a>
+
+        <a asp-controller="Schedule" asp-action="Index">
+            <i class="fa fa-calendar"></i> Schedule
+        </a>
+
+        <a href="#">
+            <i class="fa fa-chart-line"></i> Analytics
+        </a>
+
+        <a href="#">
+            <i class="fa fa-user"></i> Profile
+        </a>
+
+        <a asp-controller="Account" asp-action="Logout">
+            <i class="fa fa-right-from-bracket"></i> Logout
+        </a>
+
+    </div>
+
+    <div class="content">
+
+        @RenderBody()
+
+    </div>
+
+</body>
+</html>

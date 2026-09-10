@@ -1,0 +1,326 @@
+﻿@model IEnumerable<SmartSchedulePlanner.Models.Schedule>
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+
+    var schedules = Model
+        .OrderBy(x => x.StudyDate)
+        .ThenBy(x => x.StartTime)
+        .ToList();
+
+    var firstDate = schedules.Any()
+        ? schedules.Min(x => x.StudyDate).Date
+        : DateTime.Today;
+
+    // เริ่มจากวันจันทร์
+    int diff =
+        (7 + (firstDate.DayOfWeek - DayOfWeek.Monday)) % 7;
+
+    var weekStart =
+        firstDate.AddDays(-diff);
+
+    var days =
+        Enumerable.Range(0, 7)
+        .Select(i => weekStart.AddDays(i))
+        .ToList();
+
+    var startHour = 8;
+    var endHour = 18;
+    var hourHeight = 65;
+
+    var colors = new[]
+    {
+        "#D9EAD3",
+        "#D9EAF7",
+        "#FFF2CC",
+        "#F4CCCC",
+        "#EADCF8",
+        "#FCE4EC",
+        "#D0E0E3"
+    };
+}
+
+<style>
+
+    .schedule-page {
+        padding: 25px;
+    }
+
+    .schedule-title {
+        margin-bottom: 25px;
+    }
+
+        .schedule-title h2 {
+            font-size: 30px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .schedule-title p {
+            color: #888;
+            margin: 0;
+        }
+
+    .schedule-container {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,.06);
+        overflow-x: auto;
+    }
+
+    .calendar {
+        min-width: 1000px;
+        display: grid;
+        grid-template-columns: 75px repeat(7, 1fr);
+    }
+
+    .day-header {
+        text-align: center;
+        font-weight: 600;
+        padding: 12px 5px;
+        border-bottom: 1px solid #ddd;
+    }
+
+        .day-header small {
+            display: block;
+            color: #999;
+            margin-top: 4px;
+        }
+
+    .time-column {
+        position: relative;
+    }
+
+    .time-label {
+        height: 65px;
+        text-align: right;
+        padding-right: 10px;
+        padding-top: 5px;
+        font-size: 12px;
+        color: #777;
+    }
+
+    .day-column {
+        position: relative;
+        height: @(endHour - startHour) * 65px;
+        border-left: 1px solid #eee;
+        background: repeating-linear-gradient( to bottom, transparent 0px, transparent 64px, #eeeeee 65px );
+    }
+
+    .study-card {
+        position: absolute;
+        left: 4px;
+        right: 4px;
+        border-radius: 10px;
+        padding: 8px;
+        box-sizing: border-box;
+        border: 1px solid rgba(0,0,0,.08);
+        overflow: hidden;
+    }
+
+        .study-card .subject {
+            font-size: 13px;
+            font-weight: 600;
+            color: #444;
+        }
+
+        .study-card .time {
+            font-size: 10px;
+            color: #777;
+            margin-top: 3px;
+        }
+
+    .lunch {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: @(12 - startHour) * 65px;
+        height: 65px;
+        background: rgba(240,240,240,.7);
+        z-index: 0;
+    }
+
+    .lunch-text {
+        position: absolute;
+        left: 5px;
+        right: 5px;
+        top: @(12 - startHour) * 65px + 20px;
+        text-align: center;
+        font-size: 11px;
+        color: #999;
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    .empty {
+        text-align: center;
+        padding: 60px;
+        color: #888;
+    }
+
+</style>
+
+
+<div class="schedule-page">
+
+    <div class="schedule-title">
+
+        <h2>Smart Schedule</h2>
+
+        <p>
+            ตารางอ่านหนังสือที่สร้างด้วย Genetic Algorithm
+        </p>
+
+    </div>
+
+
+    @if (!schedules.Any())
+    {
+        <div class="schedule-container">
+
+            <div class="empty">
+
+                ยังไม่มีตารางอ่านหนังสือ
+
+            </div>
+
+        </div>
+    }
+    else
+    {
+        <div class="schedule-container">
+
+            <div class="calendar">
+
+                <!-- Header -->
+
+                <div></div>
+
+                @foreach (var day in days)
+                {
+                    <div class="day-header">
+
+                        @day.ToString("ddd")
+
+                        <small>
+                            @day.ToString("dd/MM")
+                        </small>
+
+                    </div>
+                }
+
+
+                <!-- เวลา -->
+
+                <div class="time-column">
+
+                    @for (
+                   int hour = startHour;
+                   hour < endHour;
+                   hour++
+                   )
+                    {
+                        <div class="time-label">
+
+                            @($"{hour:00}:00")
+
+                        </div>
+                    }
+
+                </div>
+
+
+                <!-- แต่ละวัน -->
+                @foreach (var day in days)
+                {
+                    <div class="day-column">
+
+                        <!-- พักกลางวัน -->
+
+                        <div class="lunch"></div>
+
+                        <div class="lunch-text">
+                            พัก
+                        </div>
+
+
+                        @{
+                            var daySchedules =
+                            schedules
+                            .Where(x =>
+                            x.StudyDate.Date ==
+                            day.Date)
+                            .ToList();
+
+                            int colorIndex = 0;
+                        }
+
+
+                        @foreach (var item in daySchedules)
+                        {
+                            double top =
+                            (
+                            item.StartTime.TotalHours
+                            - startHour
+                            )
+                            * hourHeight;
+
+                            double height =
+                            (
+                            item.EndTime
+                            - item.StartTime
+                            ).TotalHours
+                            * hourHeight;
+
+                            if (height < 30)
+                            {
+                                height = 30;
+                            }
+
+                            var color =
+                            colors[
+                            colorIndex %
+                            colors.Length
+                            ];
+
+                            colorIndex++;
+
+
+                            <div class="study-card"
+                                 style="
+                                    top:@top.ToString(
+                                        System.Globalization.CultureInfo.InvariantCulture)px;
+
+                                    height:@height.ToString(
+                                        System.Globalization.CultureInfo.InvariantCulture)px;
+
+                                    background:@color;
+                                             ">
+
+                                <div class="subject">
+
+                                    @item.SubjectName
+
+                                </div>
+
+                                <div class="time">
+
+                                    @item.StartTime.ToString(@"hh\:mm")
+                                    -
+                                    @item.EndTime.ToString(@"hh\:mm")
+
+                                </div>
+
+                            </div>
+                        }
+
+                    </div>
+                }
+
+            </div>
+
+        </div>
+    }
+
+</div>

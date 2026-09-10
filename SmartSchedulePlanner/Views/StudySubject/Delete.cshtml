@@ -1,0 +1,30 @@
+﻿@model SmartSchedulePlanner.Models.ActivitySubject
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<h2>ลบรายวิชา</h2>
+
+<p>
+    ต้องการลบวิชา
+    <strong>@Model.SubjectName</strong>
+    ใช่หรือไม่?
+</p>
+
+<form asp-action="Delete">
+
+    <input asp-for="Id" type="hidden" />
+
+    <button type="submit"
+            class="btn btn-danger">
+        ลบ
+    </button>
+
+    <a asp-action="Index"
+       asp-route-id="@Model.StudyActivityId"
+       class="btn btn-secondary">
+        ยกเลิก
+    </a>
+
+</form>

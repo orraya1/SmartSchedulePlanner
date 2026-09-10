@@ -1,0 +1,103 @@
+﻿@model SmartSchedulePlanner.Models.StudyActivity
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["Error"]
+    </div>
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Success"]
+    </div>
+}
+
+<h2>@Model.ActivityName</h2>
+
+<hr />
+
+<div class="row">
+
+    <div class="col-md-6">
+
+        <h5>รายละเอียดกิจกรรม</h5>
+
+        <p>
+
+            วันที่
+
+            <br />
+
+            @Model.StartDate.ToShortDateString()
+
+            -
+
+            @Model.EndDate.ToShortDateString()
+
+        </p>
+
+        <p>
+
+            เวลา
+
+            <br />
+
+            @Model.DailyStartTime
+
+            -
+
+            @Model.DailyEndTime
+
+        </p>
+
+    </div>
+
+</div>
+
+<hr />
+
+<h4>
+
+    วิชาในกิจกรรม
+
+</h4>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>วิชา</th>
+            <th>Weight</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var item in Model.ActivitySubjects)
+        {
+            <tr>
+                <td>@item.SubjectName</td>
+                <td>@item.Weight %</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a asp-controller="StudySubject"
+   asp-action="Create"
+   asp-route-id="@Model.Id"
+   class="btn btn-primary">
+
+    + เพิ่มวิชา
+
+</a>
+
+<a asp-controller="Schedule"
+   asp-action="Generate"
+   asp-route-id="@Model.Id"
+   class="btn btn-success">
+    Generate Schedule
+</a>

@@ -1,0 +1,56 @@
+﻿@model IEnumerable<ActivitySubject>
+
+@{
+	Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<h2>
+
+	วิชาในกิจกรรม
+
+</h2>
+
+<p>
+
+	<a asp-action="Create"
+	   asp-route-id="@ViewBag.ActivityId"
+	   class="btn btn-success">
+
+		+ เพิ่มวิชา
+
+	</a>
+
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>วิชา</th>
+            <th>Weight</th>
+            <th>จัดการ</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.SubjectName</td>
+                <td>@item.Weight %</td>
+                <td>
+                    <a asp-action="Edit"
+                       asp-route-id="@item.Id"
+                       class="btn btn-warning btn-sm">
+                        Edit
+                    </a>
+
+                    <a asp-action="Delete"
+                       asp-route-id="@item.Id"
+                       class="btn btn-danger btn-sm">
+                        Delete
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

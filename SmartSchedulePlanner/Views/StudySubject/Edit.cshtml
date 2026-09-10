@@ -1,0 +1,28 @@
+﻿@model SmartSchedulePlanner.Models.ActivitySubject
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<h2>แก้ไขรายวิชา</h2>
+
+<form asp-action="Edit">
+
+    <input asp-for="Id" type="hidden" />
+    <input asp-for="StudyActivityId" type="hidden" />
+
+    <div class="mb-3">
+        <label asp-for="SubjectName"></label>
+        <input asp-for="SubjectName" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Weight"></label>
+        <input asp-for="Weight" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        บันทึก
+    </button>
+
+</form>

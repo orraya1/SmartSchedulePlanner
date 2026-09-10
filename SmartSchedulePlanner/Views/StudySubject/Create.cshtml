@@ -1,0 +1,30 @@
+﻿@model SmartSchedulePlanner.Models.ActivitySubject
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<h2>เพิ่มวิชา</h2>
+
+<form asp-action="Create">
+
+    <input asp-for="StudyActivityId" type="hidden" />
+
+    <div class="mb-3">
+        <label asp-for="SubjectName"></label>
+        <input asp-for="SubjectName"
+               class="form-control"
+               placeholder="เช่น คณิตศาสตร์" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Weight"></label>
+        <input asp-for="Weight"
+               class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-success">
+        Save
+    </button>
+
+</form>

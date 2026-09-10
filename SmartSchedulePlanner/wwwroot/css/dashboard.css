@@ -1,0 +1,70 @@
+﻿body {
+    margin: 0;
+    font-family: 'Segoe UI';
+    background: #f6f4ef;
+}
+
+.sidebar {
+    width: 250px;
+    height: 100vh;
+    position: fixed;
+    background: white;
+    box-shadow: 0 0 20px rgba(0,0,0,.08);
+}
+
+    .sidebar h2 {
+        text-align: center;
+        margin: 30px 0;
+    }
+
+    .sidebar a {
+        display: block;
+        padding: 16px 25px;
+        color: #444;
+        text-decoration: none;
+    }
+
+        .sidebar a:hover {
+            background: #E8D8C3;
+        }
+
+.content {
+    margin-left: 270px;
+    padding: 30px;
+}
+
+.cards {
+    display: flex;
+    gap: 20px;
+}
+
+.card {
+    flex: 1;
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 5px 20px rgba(0,0,0,.08);
+}
+
+    .card h2 {
+        margin: 0;
+    }
+
+.panel {
+    background: white;
+    margin-top: 30px;
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,.08);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .table td,
+    .table th {
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+    }
