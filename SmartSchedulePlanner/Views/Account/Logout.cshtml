@@ -1,0 +1,122 @@
+﻿@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<style>
+
+    .logout-page {
+        padding: 25px;
+    }
+
+    .logout-header {
+        margin-bottom: 25px;
+    }
+
+        .logout-header h2 {
+            margin: 0;
+            font-size: 30px;
+            font-weight: 600;
+            color: #444;
+        }
+
+        .logout-header p {
+            margin: 6px 0 0;
+            color: #888;
+        }
+
+    .logout-container {
+        max-width: 600px;
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,.05);
+    }
+
+    .logout-message {
+        color: #555;
+        font-size: 14px;
+        margin-bottom: 25px;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .form-btn {
+        border-radius: 10px;
+        padding: 10px 18px;
+        font-size: 13px;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .btn-logout {
+        background: #f1f3f1;
+        color: #555;
+        border: 1px solid #e1e4e1;
+    }
+
+        .btn-logout:hover {
+            background: #e7eae7;
+            color: #333;
+        }
+
+    .btn-cancel {
+        background: #fff;
+        color: #777;
+        border: 1px solid #e1e4e1;
+    }
+
+        .btn-cancel:hover {
+            background: #f7f7f7;
+        }
+
+</style>
+
+
+<div class="logout-page">
+
+    <div class="logout-header">
+
+        <h2>
+            ออกจากระบบ
+        </h2>
+
+        <p>
+            ยืนยันการออกจากระบบ
+        </p>
+
+    </div>
+
+
+    <div class="logout-container">
+
+        <div class="logout-message">
+            คุณต้องการออกจากระบบใช่หรือไม่?
+        </div>
+
+
+        <form asp-action="ConfirmLogout"
+              method="post">
+
+            <div class="form-actions">
+
+                <button type="submit"
+                        class="form-btn btn-logout">
+                    ออกจากระบบ
+                </button>
+
+                <a asp-controller="Dashboard"
+                   asp-action="Index"
+                   class="form-btn btn-cancel">
+                    ยกเลิก
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>

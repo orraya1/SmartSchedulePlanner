@@ -2,102 +2,447 @@
 
 @{
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+
+    var totalWeight = Model.ActivitySubjects.Sum(x => x.Weight);
+
+    var subjectCount = Model.ActivitySubjects.Count();
+
+    var weightValid = totalWeight == 100;
 }
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger">
-        @TempData["Error"]
+
+<style>
+
+    .activity-page {
+        padding: 25px;
+    }
+
+    .activity-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 25px;
+        gap: 20px;
+    }
+
+    .activity-title h2 {
+        margin: 0;
+        font-size: 30px;
+        font-weight: 600;
+        color: #444;
+    }
+
+    .activity-title p {
+        margin: 6px 0 0;
+        color: #888;
+    }
+
+    .activity-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .activity-btn {
+        border: none;
+        border-radius: 10px;
+        padding: 10px 16px;
+        text-decoration: none;
+        font-size: 13px;
+        transition: .2s;
+    }
+
+    .btn-back {
+        background: #fff;
+        color: #777;
+        border: 1px solid #e1e4e1;
+    }
+
+        .btn-back:hover {
+            background: #f7f7f7;
+            color: #555;
+        }
+
+    .btn-add {
+        background: #e8def8;
+        color: #5f4b8b;
+    }
+
+        .btn-add:hover {
+            background: #d9c8f0;
+            color: #4f3d78;
+        }
+
+    .btn-generate {
+        background: #f1f3f1;
+        color: #555;
+        border: 1px solid #e1e4e1;
+    }
+
+        .btn-generate:hover {
+            background: #e7eae7;
+            color: #333;
+        }
+
+        .btn-generate.disabled {
+            background: #eeeeee;
+            color: #999;
+            pointer-events: none;
+        }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .info-card {
+        background: white;
+        border-radius: 14px;
+        padding: 18px 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,.05);
+    }
+
+    .info-label {
+        font-size: 13px;
+        color: #888;
+        margin-bottom: 7px;
+    }
+
+    .info-value {
+        font-size: 18px;
+        font-weight: 600;
+        color: #444;
+    }
+
+    .subject-container {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,.06);
+    }
+
+    .subject-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+        .subject-header h4 {
+            margin: 0;
+            font-size: 19px;
+            font-weight: 600;
+        }
+
+    .weight-status {
+        font-size: 13px;
+        padding: 6px 12px;
+        border-radius: 20px;
+    }
+
+    .weight-valid {
+        background: #d9ead3;
+        color: #4f7047;
+    }
+
+    .weight-invalid {
+        background: #f4cccc;
+        color: #8b3a3a;
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+
+        .table th {
+            background: #f8f8f8;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .table td,
+        .table th {
+            vertical-align: middle;
+            padding: 12px;
+        }
+
+    .weight-value {
+        font-weight: 600;
+    }
+
+    .empty-subject {
+        text-align: center;
+        padding: 35px;
+        color: #999;
+    }
+
+    .alert {
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    @@media (max-width: 800px) {
+
+        .activity-page {
+            padding: 15px;
+        }
+
+        .activity-header {
+            flex-direction: column;
+        }
+
+        .activity-actions {
+            width: 100%;
+        }
+
+        .activity-btn {
+            text-align: center;
+        }
+
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+</style>
+
+
+<div class="activity-page">
+
+    <!-- ALERT -->
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+
+    <!-- HEADER -->
+
+    <div class="activity-header">
+
+        <div class="activity-title">
+
+            <h2>
+                @Model.ActivityName
+            </h2>
+
+            <p>
+                รายละเอียดกิจกรรมและวิชาที่ใช้สร้างตารางอ่านหนังสือ
+            </p>
+
+        </div>
+
+
+        <div class="activity-actions">
+
+            <!-- กลับไป Activities -->
+
+            <a asp-controller="StudyActivity"
+               asp-action="Index"
+               class="activity-btn btn-back">
+
+                ← กลับไป Activities
+
+            </a>
+
+
+            <!-- เพิ่มวิชา -->
+
+            <a asp-controller="StudySubject"
+               asp-action="Create"
+               asp-route-id="@Model.Id"
+               class="activity-btn btn-add">
+
+                + เพิ่มวิชา
+
+            </a>
+
+
+            <!-- Generate Schedule -->
+            @if (weightValid && subjectCount > 0)
+            {
+                <a asp-controller="Schedule"
+                   asp-action="Generate"
+                   asp-route-id="@Model.Id"
+                   class="activity-btn btn-generate">
+
+                    Generate Schedule
+
+                </a>
+            }
+            else
+            {
+                <span class="activity-btn btn-generate disabled">
+
+                    Generate Schedule
+
+                </span>
+            }
+
+        </div>
+
     </div>
-}
 
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success">
-        @TempData["Success"]
+
+    <!-- ACTIVITY INFO -->
+
+    <div class="info-grid">
+
+        <div class="info-card">
+
+            <div class="info-label">
+                วันที่
+            </div>
+
+            <div class="info-value">
+
+                @Model.StartDate.ToString("dd/MM/yyyy")
+                -
+                @Model.EndDate.ToString("dd/MM/yyyy")
+
+            </div>
+
+        </div>
+
+
+        <div class="info-card">
+
+            <div class="info-label">
+                เวลาอ่านต่อวัน
+            </div>
+
+            <div class="info-value">
+
+                @Model.DailyStartTime.ToString(@"hh\:mm")
+                -
+                @Model.DailyEndTime.ToString(@"hh\:mm")
+
+            </div>
+
+        </div>
+
+
+        <div class="info-card">
+
+            <div class="info-label">
+                จำนวนวิชา
+            </div>
+
+            <div class="info-value">
+
+                @subjectCount วิชา
+
+            </div>
+
+        </div>
+
     </div>
-}
 
-<h2>@Model.ActivityName</h2>
 
-<hr />
+    <!-- SUBJECTS -->
 
-<div class="row">
+    <div class="subject-container">
 
-    <div class="col-md-6">
+        <div class="subject-header">
 
-        <h5>รายละเอียดกิจกรรม</h5>
+            <h4>
+                วิชาในกิจกรรม
+            </h4>
 
-        <p>
 
-            วันที่
+            @if (weightValid)
+            {
+                <span class="weight-status weight-valid">
 
-            <br />
+                    Weight รวม @totalWeight% ✓
 
-            @Model.StartDate.ToShortDateString()
+                </span>
+            }
+            else
+            {
+                <span class="weight-status weight-invalid">
 
-            -
+                    Weight รวม @totalWeight% / 100%
 
-            @Model.EndDate.ToShortDateString()
+                </span>
+            }
 
-        </p>
+        </div>
 
-        <p>
 
-            เวลา
+        @if (Model.ActivitySubjects.Any())
+        {
 
-            <br />
+            <table class="table table-bordered">
 
-            @Model.DailyStartTime
+                <thead>
 
-            -
+                    <tr>
 
-            @Model.DailyEndTime
+                        <th>
+                            วิชา
+                        </th>
 
-        </p>
+                        <th style="width:180px;">
+                            Weight
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    @foreach (var item in Model.ActivitySubjects)
+                    {
+                        <tr>
+
+                            <td>
+                                @item.SubjectName
+                            </td>
+
+                            <td class="weight-value">
+
+                                @item.Weight %
+
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        }
+        else
+        {
+
+            <div class="empty-subject">
+
+                ยังไม่มีวิชาในกิจกรรม
+
+                <br />
+
+                กรุณาเพิ่มวิชาก่อนสร้างตาราง
+
+            </div>
+
+        }
 
     </div>
 
 </div>
-
-<hr />
-
-<h4>
-
-    วิชาในกิจกรรม
-
-</h4>
-
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>วิชา</th>
-            <th>Weight</th>
-        </tr>
-    </thead>
-
-    <tbody>
-        @foreach (var item in Model.ActivitySubjects)
-        {
-            <tr>
-                <td>@item.SubjectName</td>
-                <td>@item.Weight %</td>
-            </tr>
-        }
-    </tbody>
-</table>
-
-<a asp-controller="StudySubject"
-   asp-action="Create"
-   asp-route-id="@Model.Id"
-   class="btn btn-primary">
-
-    + เพิ่มวิชา
-
-</a>
-
-<a asp-controller="Schedule"
-   asp-action="Generate"
-   asp-route-id="@Model.Id"
-   class="btn btn-success">
-    Generate Schedule
-</a>

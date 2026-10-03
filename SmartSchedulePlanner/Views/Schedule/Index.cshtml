@@ -1,0 +1,219 @@
+﻿@model IEnumerable<SmartSchedulePlanner.Models.StudyActivity>
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<style>
+
+    .schedule-page {
+        padding: 25px;
+    }
+
+    .schedule-header {
+        margin-bottom: 25px;
+    }
+
+        .schedule-header h2 {
+            margin: 0;
+            font-size: 30px;
+            font-weight: 600;
+            color: #444;
+        }
+
+        .schedule-header p {
+            margin: 6px 0 0;
+            color: #888;
+        }
+
+    .schedule-container {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,.05);
+    }
+
+    .schedule-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .schedule-table th {
+            text-align: left;
+            padding: 14px 12px;
+            color: #888;
+            font-size: 12px;
+            font-weight: 600;
+            border-bottom: 1px solid #eeeeee;
+        }
+
+        .schedule-table td {
+            padding: 15px 12px;
+            color: #555;
+            font-size: 14px;
+            border-bottom: 1px solid #f3f3f3;
+        }
+
+        .schedule-table tr:last-child td {
+            border-bottom: none;
+        }
+
+    .activity-name {
+        font-weight: 600;
+        color: #444;
+    }
+
+    .date-text {
+        color: #777;
+    }
+
+    .btn-view {
+        display: inline-block;
+        padding: 8px 14px;
+        border-radius: 9px;
+        background: #f1f3f1;
+        color: #555;
+        border: 1px solid #e1e4e1;
+        text-decoration: none;
+        font-size: 12px;
+        transition: .2s;
+    }
+
+        .btn-view:hover {
+            background: #e7eae7;
+            color: #333;
+        }
+
+    .empty-state {
+        text-align: center;
+        padding: 50px 20px;
+        color: #999;
+    }
+
+        .empty-state h3 {
+            margin: 0 0 8px;
+            color: #666;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .empty-state p {
+            margin: 0;
+            font-size: 13px;
+        }
+
+    @@media (max-width: 800px) {
+
+        .schedule-page {
+            padding: 15px;
+        }
+
+        .schedule-container {
+            overflow-x: auto;
+        }
+
+        .schedule-table {
+            min-width: 650px;
+        }
+    }
+
+</style>
+
+
+<div class="schedule-page">
+
+    <div class="schedule-header">
+
+        <h2>
+            Schedule
+        </h2>
+
+        <p>
+            ตารางอ่านหนังสือที่สร้างจากกิจกรรมของคุณ
+        </p>
+
+    </div>
+
+
+    <div class="schedule-container">
+
+        @if (!Model.Any())
+        {
+            <div class="empty-state">
+
+                <h3>
+                    ยังไม่มีตารางอ่านหนังสือ
+                </h3>
+
+                <p>
+                    กรุณาสร้างกิจกรรมและเพิ่มรายวิชาก่อน
+                </p>
+
+            </div>
+        }
+        else
+        {
+            <table class="schedule-table">
+
+                <thead>
+
+                    <tr>
+                        <th>กิจกรรม</th>
+                        <th>วันที่เริ่ม</th>
+                        <th>วันที่สิ้นสุด</th>
+                        <th>เวลาอ่าน</th>
+                        <th></th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    @foreach (var activity in Model)
+                    {
+                        <tr>
+
+                            <td>
+                                <div class="activity-name">
+                                    @activity.ActivityName
+                                </div>
+                            </td>
+
+                            <td>
+                                <span class="date-text">
+                                    @activity.StartDate.ToString("dd/MM/yyyy")
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="date-text">
+                                    @activity.EndDate.ToString("dd/MM/yyyy")
+                                </span>
+                            </td>
+
+                            <td>
+                                @activity.DailyStartTime.ToString(@"hh\:mm")
+                                -
+                                @activity.DailyEndTime.ToString(@"hh\:mm")
+                            </td>
+
+                            <td>
+                                <a asp-controller="Schedule"
+                                   asp-action="ViewSchedule"
+                                   asp-route-id="@activity.Id"
+                                   class="btn-view">
+                                    ดูตาราง
+                                </a>
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+        }
+
+    </div>
+
+</div>  

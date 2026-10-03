@@ -14,17 +14,24 @@ namespace SmartSchedulePlanner.Data
         public DbSet<Schedule> Schedules { get; set; }
         public DbSet<StudyActivity> StudyActivities { get; set; }
         public DbSet<ActivitySubject> ActivitySubjects { get; set; }
+        public DbSet<StudyProgress> StudyProgresses { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // ใช้ตาราง Activities ในฐานข้อมูล
-            modelBuilder.Entity<StudyActivity>().ToTable("Activities");
+            modelBuilder.Entity<StudyActivity>()
+                .ToTable("Activities");
 
             modelBuilder.Entity<ActivitySubject>()
                 .HasOne(a => a.StudyActivity)
                 .WithMany(a => a.ActivitySubjects)
                 .HasForeignKey(a => a.StudyActivityId);
+
+            modelBuilder.Entity<StudyProgress>()
+                .HasOne(x => x.Schedule)
+                .WithMany()
+                .HasForeignKey(x => x.ScheduleId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

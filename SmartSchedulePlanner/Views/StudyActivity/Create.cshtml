@@ -4,37 +4,257 @@
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
 }
 
-<h2>เพิ่มกิจกรรมการอ่านหนังสือ</h2>
+<style>
 
-<form asp-action="Create" method="post">
+    .activity-page {
+        padding: 25px;
+    }
 
-    <div class="mb-3">
-        <label>ชื่อกิจกรรม</label>
-        <input asp-for="ActivityName" class="form-control" />
+    .activity-header {
+        margin-bottom: 25px;
+    }
+
+        .activity-header h2 {
+            margin: 0;
+            font-size: 30px;
+            font-weight: 600;
+            color: #444;
+        }
+
+        .activity-header p {
+            margin: 6px 0 0;
+            color: #888;
+        }
+
+    .activity-form-container {
+        max-width: 600px;
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,.05);
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 7px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #555;
+    }
+
+    .form-control {
+        border: 1px solid #e1e4e1;
+        border-radius: 10px;
+        padding: 10px 12px;
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 14px;
+        outline: none;
+    }
+
+        .form-control:focus {
+            border-color: #bbb;
+            box-shadow: 0 0 0 2px rgba(0,0,0,.03);
+        }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 25px;
+    }
+
+    .form-btn {
+        border-radius: 10px;
+        padding: 10px 18px;
+        font-size: 13px;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .btn-save {
+        background: #e8def8;
+        color: #5f4b8b;
+        border: 1px solid #e1d6f0;
+    }
+
+        .btn-save:hover {
+            background: #d9c8f0;
+            color: #4f3d78;
+        }
+
+    .btn-cancel {
+        background: #fff;
+        color: #777;
+        border: 1px solid #e1e4e1;
+    }
+
+        .btn-cancel:hover {
+            background: #f7f7f7;
+        }
+
+    .field-error {
+        color: #a94442;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+
+    @@media (max-width: 800px) {
+
+        .activity-page {
+            padding: 15px;
+        }
+
+        .activity-form-container {
+            max-width: 100%;
+        }
+    }
+
+</style>
+
+
+<div class="activity-page">
+
+    <div class="activity-header">
+
+        <h2>
+            เพิ่มกิจกรรมการอ่านหนังสือ
+        </h2>
+
+        <p>
+            กำหนดช่วงเวลาและระยะเวลาสำหรับการอ่านหนังสือ
+        </p>
+
     </div>
 
-    <div class="mb-3">
-        <label>วันที่เริ่ม</label>
-        <input asp-for="StartDate" type="date" class="form-control" />
+
+    <div class="activity-form-container">
+
+        <form asp-action="Create" method="post">
+
+            <div class="form-group">
+
+                <label asp-for="ActivityName"
+                       class="form-label">
+
+                    ชื่อกิจกรรม
+
+                </label>
+
+                <input asp-for="ActivityName"
+                       class="form-control"
+                       placeholder="เช่น ติวสอบ หรือ อ่านหนังสือสอบกลางภาค" />
+
+                <span asp-validation-for="ActivityName"
+                      class="field-error">
+                </span>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label asp-for="StartDate"
+                       class="form-label">
+
+                    วันที่เริ่ม
+
+                </label>
+
+                <input asp-for="StartDate"
+                       type="date"
+                       class="form-control" />
+
+                <span asp-validation-for="StartDate"
+                      class="field-error">
+                </span>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label asp-for="EndDate"
+                       class="form-label">
+
+                    วันที่สิ้นสุด
+
+                </label>
+
+                <input asp-for="EndDate"
+                       type="date"
+                       class="form-control" />
+
+                <span asp-validation-for="EndDate"
+                      class="field-error">
+                </span>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label asp-for="DailyStartTime"
+                       class="form-label">
+
+                    เวลาเริ่มอ่าน
+
+                </label>
+
+                <input asp-for="DailyStartTime"
+                       type="time"
+                       class="form-control" />
+
+                <span asp-validation-for="DailyStartTime"
+                      class="field-error">
+                </span>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label asp-for="DailyEndTime"
+                       class="form-label">
+
+                    เวลาเลิกอ่าน
+
+                </label>
+
+                <input asp-for="DailyEndTime"
+                       type="time"
+                       class="form-control" />
+
+                <span asp-validation-for="DailyEndTime"
+                      class="field-error">
+                </span>
+
+            </div>
+
+
+            <div class="form-actions">
+
+                <button type="submit"
+                        class="form-btn btn-save">
+
+                    บันทึกและไปเพิ่มวิชา
+
+                </button>
+
+                <a asp-action="Index"
+                   class="form-btn btn-cancel">
+
+                    ยกเลิก
+
+                </a>
+
+            </div>
+
+        </form>
+
     </div>
 
-    <div class="mb-3">
-        <label>วันที่สิ้นสุด</label>
-        <input asp-for="EndDate" type="date" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label>เวลาเริ่มอ่าน</label>
-        <input asp-for="DailyStartTime" type="time" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label>เวลาเลิกอ่าน</label>
-        <input asp-for="DailyEndTime" type="time" class="form-control" />
-    </div>
-
-    <button class="btn btn-success">
-        บันทึกและไปเพิ่มวิชา
-    </button>
-
-</form>
+</div>

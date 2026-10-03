@@ -1,56 +1,538 @@
-﻿@model IEnumerable<ActivitySubject>
+﻿@model IEnumerable<SmartSchedulePlanner.Models.ActivitySubject>
 
 @{
-	Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+
+    var totalWeight = Model.Sum(x => x.Weight);
+    var subjectCount = Model.Count();
+
+    var remainingWeight = 100 - totalWeight;
 }
 
-<h2>
+<style>
 
-	วิชาในกิจกรรม
+    .subject-page {
+        padding: 25px;
+    }
 
-</h2>
+    .subject-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 25px;
+        gap: 20px;
+    }
 
-<p>
+    .subject-title h2 {
+        margin: 0;
+        font-size: 30px;
+        font-weight: 600;
+        color: #444;
+    }
 
-	<a asp-action="Create"
-	   asp-route-id="@ViewBag.ActivityId"
-	   class="btn btn-success">
+    .subject-title p {
+        margin: 6px 0 0;
+        color: #888;
+    }
 
-		+ เพิ่มวิชา
+    .header-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
 
-	</a>
+    .back-btn {
+        background: #fff;
+        color: #777;
+        border: 1px solid #e1e4e1;
+        border-radius: 10px;
+        padding: 10px 16px;
+        text-decoration: none;
+        font-size: 13px;
+        transition: .2s;
+    }
 
-</p>
-
-<table class="table">
-    <thead>
-        <tr>
-            <th>วิชา</th>
-            <th>Weight</th>
-            <th>จัดการ</th>
-        </tr>
-    </thead>
-
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>@item.SubjectName</td>
-                <td>@item.Weight %</td>
-                <td>
-                    <a asp-action="Edit"
-                       asp-route-id="@item.Id"
-                       class="btn btn-warning btn-sm">
-                        Edit
-                    </a>
-
-                    <a asp-action="Delete"
-                       asp-route-id="@item.Id"
-                       class="btn btn-danger btn-sm">
-                        Delete
-                    </a>
-                </td>
-            </tr>
+        .back-btn:hover {
+            background: #f7f7f7;
+            color: #555;
         }
-    </tbody>
-</table>
+
+    .add-btn {
+        background: #e8def8;
+        color: #5f4b8b;
+        border-radius: 10px;
+        padding: 10px 16px;
+        text-decoration: none;
+        font-size: 13px;
+        border: none;
+        transition: .2s;
+    }
+
+        .add-btn:hover {
+            background: #d9c8f0;
+            color: #4f3d78;
+        }
+
+    .generate-btn {
+        background: #f1f3f1;
+        color: #555;
+        border: 1px solid #e1e4e1;
+        border-radius: 10px;
+        padding: 10px 16px;
+        text-decoration: none;
+        font-size: 13px;
+        transition: .2s;
+    }
+
+        .generate-btn:hover {
+            background: #e7eae7;
+            color: #333;
+        }
+
+        .generate-btn.disabled {
+            background: #eeeeee;
+            color: #aaa;
+            cursor: not-allowed;
+        }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+        max-width: 700px;
+    }
+
+    .summary-card {
+        background: white;
+        border-radius: 14px;
+        padding: 18px 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,.05);
+    }
+
+    .summary-label {
+        font-size: 13px;
+        color: #888;
+        margin-bottom: 7px;
+    }
+
+    .summary-value {
+        font-size: 22px;
+        font-weight: 600;
+        color: #444;
+    }
+
+    .summary-sub {
+        font-size: 12px;
+        color: #999;
+        margin-top: 4px;
+    }
+
+    .weight-valid {
+        color: #5d7a55;
+    }
+
+    .weight-invalid {
+        color: #a45a5a;
+    }
+
+    .weight-progress {
+        margin-top: 10px;
+    }
+
+    .weight-progress-bar {
+        width: 100%;
+        height: 8px;
+        background: #eeeeee;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .weight-progress-fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width .3s;
+    }
+
+    .weight-progress-text {
+        margin-top: 7px;
+        font-size: 12px;
+        color: #888;
+    }
+
+    .weight-check {
+        margin-top: 6px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+        .weight-check.valid {
+            color: #5d7a55;
+        }
+
+        .weight-check.invalid {
+            color: #a45a5a;
+        }
+
+    .subject-container {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,.05);
+    }
+
+    .subject-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .subject-table th {
+            background: #f8f8f8;
+            color: #666;
+            font-weight: 600;
+            font-size: 13px;
+            padding: 13px;
+            text-align: left;
+        }
+
+        .subject-table td {
+            padding: 13px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #555;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        .subject-table tr:last-child td {
+            border-bottom: none;
+        }
+
+    .weight-value {
+        font-weight: 600;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+
+    .action-btn {
+        border-radius: 8px;
+        padding: 7px 12px;
+        font-size: 12px;
+        text-decoration: none;
+        transition: .2s;
+    }
+
+    .btn-edit {
+        background: #f1f3f1;
+        color: #666;
+        border: 1px solid #e1e4e1;
+    }
+
+        .btn-edit:hover {
+            background: #e7eae7;
+            color: #444;
+        }
+
+    .btn-delete {
+        background: #fff;
+        color: #888;
+        border: 1px solid #e1e4e1;
+    }
+
+        .btn-delete:hover {
+            background: #f5f5f5;
+            color: #555;
+        }
+
+    .empty-subject {
+        text-align: center;
+        padding: 45px 20px;
+        color: #999;
+    }
+
+        .empty-subject p {
+            margin: 0 0 15px;
+        }
+
+    @@media (max-width: 800px) {
+
+        .subject-page {
+            padding: 15px;
+        }
+
+        .subject-header {
+            flex-direction: column;
+        }
+
+        .header-actions {
+            width: 100%;
+        }
+
+        .summary-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .subject-container {
+            overflow-x: auto;
+        }
+
+        .subject-table {
+            min-width: 600px;
+        }
+    }
+
+</style>
+
+
+<div class="subject-page">
+
+    <div class="subject-header">
+
+        <div class="subject-title">
+
+            <h2>
+                จัดการวิชา
+            </h2>
+
+            <p>
+                รายวิชาในกิจกรรมสำหรับสร้างตารางอ่านหนังสือ
+            </p>
+
+        </div>
+
+
+        <div class="header-actions">
+
+            <!-- กลับไปหน้า Study Planner -->
+            <a asp-controller="StudyActivity"
+               asp-action="Index"
+               class="back-btn">
+
+                ← กลับไป Study Planner
+
+            </a>
+
+
+            <!-- เพิ่มวิชา -->
+            <a asp-action="Create"
+               asp-route-id="@ViewBag.ActivityId"
+               class="add-btn">
+
+                + เพิ่มวิชา
+
+            </a>
+
+
+            <!-- Generate Schedule -->
+            @if (totalWeight == 100 && subjectCount > 0)
+            {
+                <a asp-controller="Schedule"
+                   asp-action="Generate"
+                   asp-route-id="@ViewBag.ActivityId"
+                   class="generate-btn">
+
+                    Generate Schedule
+
+                </a>
+            }
+            else
+            {
+                <span class="generate-btn disabled"
+                      title="Weight ต้องรวมเป็น 100% และต้องมีวิชาอย่างน้อย 1 วิชา">
+
+                    Generate Schedule
+
+                </span>
+            }
+
+        </div>
+
+    </div>
+
+
+    <div class="summary-grid">
+
+        <div class="summary-card">
+
+            <div class="summary-label">
+                จำนวนวิชา
+            </div>
+
+            <div class="summary-value">
+                @subjectCount
+            </div>
+
+            <div class="summary-sub">
+                รายวิชาที่เพิ่มในกิจกรรม
+            </div>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <div class="summary-label">
+                Weight รวม
+            </div>
+
+            <div class="summary-value @(totalWeight == 100 ? "weight-valid" : "weight-invalid")">
+
+                @totalWeight% / 100%
+
+            </div>
+
+            <div class="weight-progress">
+
+                @{
+                    var progressWidth = Math.Min(totalWeight, 100);
+                }
+
+                <div class="weight-progress-bar">
+
+                    <div class="weight-progress-fill"
+                         style="
+                    width:@progressWidth%;
+                    background:@(totalWeight == 100
+                        ? "#9BB58F"
+                        : totalWeight > 100
+                            ? "#C98C8C"
+                            : "#C8B8DF");
+                 ">
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="weight-progress-text">
+
+                @if (totalWeight < 100)
+                {
+                    <span>
+                        เหลืออีก <strong>@remainingWeight%</strong>
+                        เพื่อให้ครบ 100%
+                    </span>
+                }
+                else if (totalWeight == 100)
+                {
+                    <span>
+                        Weight ครบ 100%
+                    </span>
+                }
+                else
+                {
+                    <span>
+                        เกินมา <strong>@Math.Abs(remainingWeight)%</strong>
+                    </span>
+                }
+
+            </div>
+
+            <div class="weight-check @(totalWeight == 100 ? "valid" : "invalid")">
+
+                @if (totalWeight == 100)
+                {
+                    <span>✓ Weight ถูกต้อง สามารถสร้างตารางได้</span>
+                }
+                else if (totalWeight < 100)
+                {
+                    <span>⚠ Weight ยังไม่ครบ 100%</span>
+                }
+                else
+                {
+                    <span>⚠ Weight เกิน 100%</span>
+                }
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="subject-container">
+
+        @if (!Model.Any())
+        {
+            <div class="empty-subject">
+
+                <p>
+                    ยังไม่มีรายวิชาในกิจกรรมนี้
+                </p>
+
+                <a asp-action="Create"
+                   asp-route-id="@ViewBag.ActivityId"
+                   class="add-btn">
+
+                    + เพิ่มวิชา
+
+                </a>
+
+            </div>
+        }
+        else
+        {
+            <table class="subject-table">
+
+                <thead>
+
+                    <tr>
+                        <th>วิชา</th>
+                        <th>Weight</th>
+                        <th>จัดการ</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+
+                            <td>
+                                @item.SubjectName
+                            </td>
+
+                            <td class="weight-value">
+                                @item.Weight%
+                            </td>
+
+                            <td>
+
+                                <div class="action-buttons">
+
+                                    <a asp-action="Edit"
+                                       asp-route-id="@item.Id"
+                                       class="action-btn btn-edit">
+
+                                        แก้ไข
+
+                                    </a>
+
+                                    <a asp-action="Delete"
+                                       asp-route-id="@item.Id"
+                                       class="action-btn btn-delete">
+
+                                        ลบ
+
+                                    </a>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+        }
+
+    </div>
+
+</div>

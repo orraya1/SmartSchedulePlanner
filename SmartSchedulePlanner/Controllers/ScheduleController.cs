@@ -19,16 +19,62 @@ namespace SmartSchedulePlanner.Controllers
             _ga = ga;
         }
 
+        // แสดง Activities ของ User ที่ Login อยู่
+        public IActionResult Index()
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            if (userId == null)
+                return RedirectToAction("Login", "Account");
+
+            var activities = _context.StudyActivities
+                .Where(x => x.UserId == userId.Value)
+                .OrderByDescending(x => x.Id)
+                .ToList();
+
+            return View(activities);
+        }
+
+        // สร้าง Schedule ด้วย Genetic Algorithm
         public IActionResult Generate(int id)
         {
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            if (userId == null)
+                return RedirectToAction("Login", "Account");
+
+            // ตรวจสอบว่า Activity เป็นของ User ที่ Login อยู่
             var activity = _context.StudyActivities
                 .Include(a => a.ActivitySubjects)
-                .FirstOrDefault(a => a.Id == id);
+                .FirstOrDefault(a =>
+                    a.Id == id &&
+                    a.UserId == userId.Value);
+
+            if (activity.IsScheduleConfirmed)
+            {
+                TempData["Error"] =
+                    "ตารางกิจกรรมนี้ได้รับการยืนยันแล้ว ไม่สามารถสร้างตารางใหม่ได้";
+
+                return RedirectToAction(
+                    "ViewSchedule",
+                    new { id });
+            }
 
             if (activity == null)
                 return NotFound();
 
-            int totalWeight = activity.ActivitySubjects.Sum(x => x.Weight);
+            if (!activity.ActivitySubjects.Any())
+            {
+                TempData["Error"] = "กรุณาเพิ่มวิชาก่อนสร้างตาราง";
+
+                return RedirectToAction(
+                    "Details",
+                    "StudyActivity",
+                    new { id });
+            }
+
+            int totalWeight = activity.ActivitySubjects
+                .Sum(x => x.Weight);
 
             if (totalWeight != 100)
             {
@@ -41,10 +87,12 @@ namespace SmartSchedulePlanner.Controllers
                     new { id });
             }
 
+            // Generate ตารางด้วย Genetic Algorithm
             var result = _ga.Generate(
-     activity,
-     activity.ActivitySubjects.ToList());
-            // ลบตารางเก่าก่อน
+                activity,
+                activity.ActivitySubjects.ToList());
+
+            // ลบตารางเก่าของ Activity นี้ก่อน
             var oldSchedules = _context.Schedules
                 .Where(x => x.StudyActivityId == id)
                 .ToList();
@@ -68,27 +116,93 @@ namespace SmartSchedulePlanner.Controllers
             _context.SaveChanges();
 
             TempData["Success"] =
-     $"สร้างตารางสำเร็จ Fitness = {result.Fitness}";
+                $"สร้างตารางสำเร็จ Fitness = {result.Fitness:0.00}";
+
+            TempData["Fitness"] =
+                result.Fitness.ToString("0.00");
 
             return RedirectToAction(
                 "ViewSchedule",
                 new { id });
         }
-        public IActionResult ViewSchedule(int id)
-        {
-            var schedules = _context.Schedules
-                .Where(x => x.StudyActivityId == id)
-                .OrderBy(x => x.StudyDate)
-                .ThenBy(x => x.StartTime)
-                .ToList();
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ConfirmSchedule(int id)
+        {
             var activity = _context.StudyActivities
                 .FirstOrDefault(x => x.Id == id);
 
             if (activity == null)
                 return NotFound();
 
-            ViewBag.Activity = activity;
+            var hasSchedule = _context.Schedules
+                .Any(x => x.StudyActivityId == id);
+
+            if (!hasSchedule)
+            {
+                TempData["Error"] =
+                    "ยังไม่มีตารางสำหรับยืนยัน";
+
+                return RedirectToAction(
+                    "ViewSchedule",
+                    new { id });
+            }
+
+            activity.IsScheduleConfirmed = true;
+
+            _context.SaveChanges();
+
+            TempData["Success"] =
+                "ยืนยันตารางเรียบร้อยแล้ว";
+
+            return RedirectToAction(
+                "ViewSchedule",
+                new { id });
+        }
+
+        // แสดงตารางของ Activity
+        public IActionResult ViewSchedule(int id)
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            if (userId == null)
+                return RedirectToAction("Login", "Account");
+
+            // ตรวจสอบว่า Activity เป็นของ User ที่ Login อยู่
+            var activity = _context.StudyActivities
+                .FirstOrDefault(a =>
+                    a.Id == id &&
+                    a.UserId == userId.Value);
+
+            if (activity == null)
+                return NotFound();
+
+            var schedules = _context.Schedules
+        .Where(x => x.StudyActivityId == id)
+        .OrderBy(x => x.StudyDate)
+        .ThenBy(x => x.StartTime)
+        .ToList();
+
+            var scheduleIds = schedules
+                .Select(x => x.Id)
+                .ToList();
+
+            var progressList = _context.StudyProgresses
+                .Where(x => scheduleIds.Contains(x.ScheduleId))
+                .ToList();
+
+            var progressBySchedule = progressList
+                .ToDictionary(x => x.ScheduleId);
+
+            ViewBag.ActivityId = id;
+            ViewBag.Fitness = TempData["Fitness"];
+            ViewBag.ProgressBySchedule = progressBySchedule;
+            ViewBag.IsScheduleConfirmed =
+    _context.StudyActivities
+        .Where(x => x.Id == id)
+        .Select(x => x.IsScheduleConfirmed)
+        .FirstOrDefault();
 
             return View(schedules);
         }

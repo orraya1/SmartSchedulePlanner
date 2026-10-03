@@ -21,7 +21,12 @@ namespace SmartSchedulePlanner.Models
 
         public User? User { get; set; }
 
+        // สีประจำ Activity สำหรับแสดงบน Dashboard
+        public string Color { get; set; } = "#DDE9D5";
+
         public ICollection<ActivitySubject> ActivitySubjects { get; set; }
             = new List<ActivitySubject>();
+
+        public bool IsScheduleConfirmed { get; set; } = false;
     }
 }

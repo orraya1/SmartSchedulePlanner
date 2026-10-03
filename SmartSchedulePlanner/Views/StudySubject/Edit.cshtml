@@ -4,25 +4,204 @@
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
 }
 
-<h2>แก้ไขรายวิชา</h2>
+<style>
 
-<form asp-action="Edit">
+    .subject-page {
+        padding: 25px;
+    }
 
-    <input asp-for="Id" type="hidden" />
-    <input asp-for="StudyActivityId" type="hidden" />
+    .subject-header {
+        margin-bottom: 25px;
+    }
 
-    <div class="mb-3">
-        <label asp-for="SubjectName"></label>
-        <input asp-for="SubjectName" class="form-control" />
+        .subject-header h2 {
+            margin: 0;
+            font-size: 30px;
+            font-weight: 600;
+            color: #444;
+        }
+
+        .subject-header p {
+            margin: 6px 0 0;
+            color: #888;
+        }
+
+    .subject-form-container {
+        max-width: 600px;
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,.05);
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 7px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #555;
+    }
+
+    .form-control {
+        border: 1px solid #e1e4e1;
+        border-radius: 10px;
+        padding: 10px 12px;
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 14px;
+        outline: none;
+    }
+
+        .form-control:focus {
+            border-color: #bbb;
+            box-shadow: 0 0 0 2px rgba(0,0,0,.03);
+        }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 25px;
+    }
+
+    .form-btn {
+        border: none;
+        border-radius: 10px;
+        padding: 10px 18px;
+        font-size: 13px;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .btn-save {
+        background: #f1f3f1;
+        color: #555;
+        border: 1px solid #e1e4e1;
+    }
+
+        .btn-save:hover {
+            background: #e7eae7;
+            color: #333;
+        }
+
+    .btn-cancel {
+        background: #fff;
+        color: #777;
+        border: 1px solid #e1e4e1;
+    }
+
+        .btn-cancel:hover {
+            background: #f7f7f7;
+        }
+
+    .field-error {
+        color: #a94442;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+
+</style>
+
+
+<div class="subject-page">
+
+    <div class="subject-header">
+
+        <h2>
+            แก้ไขรายวิชา
+        </h2>
+
+        <p>
+            แก้ไขชื่อวิชาและ Weight สำหรับการสร้างตารางอ่านหนังสือ
+        </p>
+
     </div>
 
-    <div class="mb-3">
-        <label asp-for="Weight"></label>
-        <input asp-for="Weight" class="form-control" />
+
+    <div class="subject-form-container">
+
+        <form asp-action="Edit" method="post">
+
+            <input asp-for="Id" type="hidden" />
+
+            <input asp-for="StudyActivityId" type="hidden" />
+
+
+            <!-- SUBJECT NAME -->
+
+            <div class="form-group">
+
+                <label asp-for="SubjectName"
+                       class="form-label">
+
+                    ชื่อวิชา
+
+                </label>
+
+                <input asp-for="SubjectName"
+                       class="form-control"
+                       placeholder="เช่น คณิตศาสตร์" />
+
+                <span asp-validation-for="SubjectName"
+                      class="field-error">
+                </span>
+
+            </div>
+
+
+            <!-- WEIGHT -->
+
+            <div class="form-group">
+
+                <label asp-for="Weight"
+                       class="form-label">
+
+                    Weight (%)
+
+                </label>
+
+                <input asp-for="Weight"
+                       class="form-control"
+                       type="number"
+                       min="1"
+                       max="100"
+                       placeholder="เช่น 30" />
+
+                <span asp-validation-for="Weight"
+                      class="field-error">
+                </span>
+
+            </div>
+
+
+            <!-- BUTTONS -->
+
+            <div class="form-actions">
+
+                <button type="submit"
+                        class="form-btn btn-save">
+
+                    บันทึก
+
+                </button>
+
+
+                <a asp-controller="StudyActivity"
+                   asp-action="Details"
+                   asp-route-id="@Model.StudyActivityId"
+                   class="form-btn btn-cancel">
+
+                    ยกเลิก
+
+                </a>
+
+            </div>
+
+        </form>
+
     </div>
 
-    <button type="submit" class="btn btn-primary">
-        บันทึก
-    </button>
-
-</form>
+</div>

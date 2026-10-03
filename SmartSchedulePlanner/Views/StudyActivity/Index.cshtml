@@ -4,78 +4,313 @@
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
 }
 
-<h2>Study Activities</h2>
+<style>
 
-<p>
-    <a asp-action="Create" class="btn btn-success">
-        + เพิ่มกิจกรรม
-    </a>
-</p>
+    .activity-page {
+        padding: 25px;
+    }
 
-<table class="table table-bordered">
+    .activity-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 25px;
+        gap: 20px;
+    }
 
-    <thead>
-        <tr>
-            <th>ชื่อกิจกรรม</th>
-            <th>วันที่</th>
-            <th>เวลา</th>
-            <th>จัดการ</th>
-        </tr>
-    </thead>
+    .activity-title h2 {
+        margin: 0;
+        font-size: 30px;
+        font-weight: 600;
+        color: #444;
+    }
 
-    <tbody>
+    .activity-title p {
+        margin: 6px 0 0;
+        color: #888;
+    }
 
-        @foreach (var item in Model)
-        {
-            <tr>
+    .add-btn {
+        background: #e8def8;
+        color: #5f4b8b;
+        border-radius: 10px;
+        padding: 10px 16px;
+        text-decoration: none;
+        font-size: 13px;
+        border: none;
+        transition: .2s;
+    }
 
-                <td>@item.ActivityName</td>
-
-                <td>
-                    @item.StartDate.ToShortDateString()
-                    -
-                    @item.EndDate.ToShortDateString()
-                </td>
-
-                <td>
-                    @item.DailyStartTime
-                    -
-                    @item.DailyEndTime
-                </td>
-
-                <td>
-
-                    <div class="btn-group">
-
-                        <a asp-action="Details"
-                           asp-route-id="@item.Id"
-                           class="btn btn-outline-primary">
-
-                            รายละเอียด
-
-                        </a>
-
-                        <a asp-controller="StudySubject"
-                           asp-action="Index"
-                           asp-route-id="@item.Id"
-                           class="btn btn-success">
-
-                            จัดการวิชา
-
-                        </a>
-                        <a asp-action="Delete"
-                           asp-route-id="@item.Id"
-                           class="btn btn-danger btn-sm">
-                            ลบ
-                        </a>
-
-                    </div>
-
-                </td>
-
-            </tr>
+        .add-btn:hover {
+            background: #d9c8f0;
+            color: #4f3d78;
         }
 
-    </tbody>
+    .activity-container {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,.05);
+    }
 
-</table>
+    .activity-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .activity-table th {
+            background: #f8f8f8;
+            color: #666;
+            font-weight: 600;
+            font-size: 13px;
+            padding: 13px;
+            text-align: left;
+        }
+
+        .activity-table td {
+            padding: 14px 13px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #555;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        .activity-table tr:last-child td {
+            border-bottom: none;
+        }
+
+    .activity-name {
+        font-weight: 600;
+        color: #444;
+    }
+
+    .activity-date,
+    .activity-time {
+        color: #666;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        border-radius: 8px;
+        padding: 7px 12px;
+        font-size: 12px;
+        text-decoration: none;
+        transition: .2s;
+        white-space: nowrap;
+    }
+
+    .btn-detail {
+        background: #f1f3f1;
+        color: #666;
+        border: 1px solid #e1e4e1;
+    }
+
+        .btn-detail:hover {
+            background: #e7eae7;
+            color: #444;
+        }
+
+    .btn-subject {
+        background: #e8def8;
+        color: #5f4b8b;
+        border: 1px solid #e1d6f0;
+    }
+
+        .btn-subject:hover {
+            background: #d9c8f0;
+            color: #4f3d78;
+        }
+
+    /* ปุ่มดูตาราง */
+    .btn-schedule {
+        background: #f1f3f1;
+        color: #666;
+        border: 1px solid #e1e4e1;
+    }
+
+        .btn-schedule:hover {
+            background: #e7eae7;
+            color: #444;
+        }
+
+    .btn-delete {
+        background: #fff;
+        color: #888;
+        border: 1px solid #e1e4e1;
+    }
+
+        .btn-delete:hover {
+            background: #f5f5f5;
+            color: #555;
+        }
+
+    .empty-activity {
+        text-align: center;
+        padding: 45px 20px;
+        color: #999;
+    }
+
+        .empty-activity p {
+            margin: 0 0 15px;
+        }
+
+    @@media (max-width: 900px) {
+
+        .activity-page {
+            padding: 15px;
+        }
+
+        .activity-header {
+            flex-direction: column;
+        }
+
+        .activity-container {
+            overflow-x: auto;
+        }
+
+        .activity-table {
+            min-width: 1000px;
+        }
+    }
+
+</style>
+
+
+<div class="activity-page">
+
+    <div class="activity-header">
+
+        <div class="activity-title">
+
+            <h2>
+                Study Planner
+            </h2>
+
+            <p>
+                จัดการกิจกรรมและช่วงเวลาอ่านหนังสือ
+            </p>
+
+        </div>
+
+        <a asp-action="Create"
+           class="add-btn">
+
+            + เพิ่มกิจกรรม
+
+        </a>
+
+    </div>
+
+
+    <div class="activity-container">
+
+        @if (!Model.Any())
+        {
+            <div class="empty-activity">
+
+                <p>
+                    ยังไม่มีกิจกรรม
+                </p>
+
+                <a asp-action="Create"
+                   class="add-btn">
+
+                    + เพิ่มกิจกรรม
+
+                </a>
+
+            </div>
+        }
+        else
+        {
+            <table class="activity-table">
+
+                <thead>
+
+                    <tr>
+                        <th>ชื่อกิจกรรม</th>
+                        <th>วันที่</th>
+                        <th>เวลา</th>
+                        <th>จัดการ</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+
+                            <td class="activity-name">
+                                @item.ActivityName
+                            </td>
+
+                            <td class="activity-date">
+
+                                @item.StartDate.ToShortDateString()
+                                -
+                                @item.EndDate.ToShortDateString()
+
+                            </td>
+
+                            <td class="activity-time">
+
+                                @item.DailyStartTime
+                                -
+                                @item.DailyEndTime
+
+                            </td>
+
+                            <td>
+
+                                <div class="action-buttons">
+
+                                    <!-- รายละเอียด -->
+                                    <a asp-action="Details"
+                                       asp-route-id="@item.Id"
+                                       class="action-btn btn-detail">
+
+                                        รายละเอียด
+
+                                    </a>
+
+                                    <!-- ดูตาราง -->
+                                    <a asp-controller="StudyActivity"
+                                       asp-action="Schedule"
+                                       asp-route-id="@item.Id"
+                                       class="action-btn btn-schedule">
+
+                                        ดูตาราง
+
+                                    </a>
+
+                                    <!-- ลบ -->
+                                    <a asp-action="Delete"
+                                       asp-route-id="@item.Id"
+                                       class="action-btn btn-delete">
+
+                                        ลบ
+
+                                    </a>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+        }
+
+    </div>
+
+</div>

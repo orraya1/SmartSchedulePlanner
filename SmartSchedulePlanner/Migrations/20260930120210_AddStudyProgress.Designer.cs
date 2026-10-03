@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SmartSchedulePlanner.Data;
 
@@ -11,9 +12,11 @@ using SmartSchedulePlanner.Data;
 namespace SmartSchedulePlanner.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260930120210_AddStudyProgress")]
+    partial class AddStudyProgress
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -81,8 +84,6 @@ namespace SmartSchedulePlanner.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StudyActivityId");
-
                     b.ToTable("Schedules");
                 });
 
@@ -98,10 +99,6 @@ namespace SmartSchedulePlanner.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Color")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<TimeSpan>("DailyEndTime")
                         .HasColumnType("time");
 
@@ -110,9 +107,6 @@ namespace SmartSchedulePlanner.Migrations
 
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsScheduleConfirmed")
-                        .HasColumnType("bit");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
@@ -138,21 +132,18 @@ namespace SmartSchedulePlanner.Migrations
                     b.Property<int>("ActualMinutes")
                         .HasColumnType("int");
 
-                    b.Property<bool>("IsCompleted")
-                        .HasColumnType("bit");
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Note")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("ProgressPercent")
-                        .HasColumnType("int");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("ScheduleId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -227,17 +218,6 @@ namespace SmartSchedulePlanner.Migrations
                     b.HasOne("SmartSchedulePlanner.Models.Subject", null)
                         .WithMany("ActivitySubjects")
                         .HasForeignKey("SubjectId");
-
-                    b.Navigation("StudyActivity");
-                });
-
-            modelBuilder.Entity("SmartSchedulePlanner.Models.Schedule", b =>
-                {
-                    b.HasOne("SmartSchedulePlanner.Models.StudyActivity", "StudyActivity")
-                        .WithMany()
-                        .HasForeignKey("StudyActivityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.Navigation("StudyActivity");
                 });

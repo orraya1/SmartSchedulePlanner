@@ -18,22 +18,19 @@
         <h2>Planner</h2>
 
         <a asp-controller="Dashboard" asp-action="Index">
-            <i class="fa fa-home"></i> Dashboard
+            <i class="fa fa-home"></i> Home
         </a>
 
         <a asp-controller="StudyActivity" asp-action="Index">
-            <i class="fa fa-book"></i> Study Activities
+            <i class="fa fa-book"></i> Study Planner
         </a>
 
-        <a asp-controller="Schedule" asp-action="Index">
-            <i class="fa fa-calendar"></i> Schedule
+        <a href="@Url.Action("Index", "Analytics")">
+            <i class="fa fa-chart-line"></i>
+            Analytics
         </a>
 
-        <a href="#">
-            <i class="fa fa-chart-line"></i> Analytics
-        </a>
-
-        <a href="#">
+        <a asp-controller="Profile" asp-action="Index">
             <i class="fa fa-user"></i> Profile
         </a>
 

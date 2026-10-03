@@ -1,0 +1,146 @@
+﻿@model SmartSchedulePlanner.Models.User
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<style>
+
+    .profile-page {
+        padding: 25px;
+    }
+
+    .profile-header {
+        margin-bottom: 25px;
+    }
+
+        .profile-header h2 {
+            margin: 0;
+            font-size: 30px;
+            font-weight: 600;
+            color: #444;
+        }
+
+        .profile-header p {
+            margin: 6px 0 0;
+            color: #888;
+        }
+
+    .profile-card {
+        max-width: 600px;
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,.05);
+    }
+
+    .profile-row {
+        display: flex;
+        padding: 15px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+        .profile-row:last-child {
+            border-bottom: none;
+        }
+
+    .profile-label {
+        width: 150px;
+        color: #888;
+        font-size: 13px;
+    }
+
+    .profile-value {
+        color: #444;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    @@media (max-width: 800px) {
+
+        .profile-page {
+            padding: 15px;
+        }
+
+        .profile-card {
+            max-width: 100%;
+        }
+
+        .profile-row {
+            flex-direction: column;
+            gap: 5px;
+        }
+    }
+
+</style>
+
+
+<div class="profile-page">
+
+    <div class="profile-header">
+
+        <h2>Profile</h2>
+
+        <p>
+            ข้อมูลบัญชีผู้ใช้งาน
+        </p>
+
+    </div>
+
+
+    <div class="profile-card">
+
+        <div class="profile-row">
+
+            <div class="profile-label">
+                ชื่อ-นามสกุล
+            </div>
+
+            <div class="profile-value">
+                @Model.FullName
+            </div>
+
+        </div>
+
+
+        <div class="profile-row">
+
+            <div class="profile-label">
+                Email
+            </div>
+
+            <div class="profile-value">
+                @Model.Email
+            </div>
+
+        </div>
+
+
+        <div class="profile-row">
+
+            <div class="profile-label">
+                Role
+            </div>
+
+            <div class="profile-value">
+                @Model.Role
+            </div>
+
+        </div>
+
+
+        <div class="profile-row">
+
+            <div class="profile-label">
+                วันที่สมัคร
+            </div>
+
+            <div class="profile-value">
+                @Model.CreatedAt.ToString("dd/MM/yyyy")
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

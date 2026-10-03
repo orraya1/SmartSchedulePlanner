@@ -1,0 +1,522 @@
+﻿@model SmartSchedulePlanner.Models.StudyProgress
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+
+    var schedule =
+        (SmartSchedulePlanner.Models.Schedule)ViewBag.Schedule;
+}
+
+<style>
+
+    .progress-page {
+        padding: 30px;
+        max-width: 760px;
+        margin: auto;
+    }
+
+    /* =========================
+           Header
+           ========================= */
+
+    .progress-header {
+        margin-bottom: 25px;
+    }
+
+        .progress-header h2 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .progress-header p {
+            margin: 7px 0 0;
+            color: #888;
+            font-size: 14px;
+        }
+
+
+    /* =========================
+           Card
+           ========================= */
+
+    .progress-card {
+        background: white;
+        border-radius: 18px;
+        padding: 28px;
+        box-shadow: 0 4px 18px rgba(0,0,0,.06);
+    }
+
+
+    /* =========================
+           Subject
+           ========================= */
+
+    .subject-box {
+        background: #f7f5f2;
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin-bottom: 28px;
+    }
+
+    .subject-name {
+        font-size: 21px;
+        font-weight: 600;
+        color: #444;
+    }
+
+    .subject-time {
+        margin-top: 7px;
+        font-size: 13px;
+        color: #888;
+    }
+
+
+    /* =========================
+           Section
+           ========================= */
+
+    .section-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #555;
+        margin-bottom: 12px;
+    }
+
+
+    /* =========================
+           Status Options
+           ========================= */
+
+    .status-options {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 25px;
+    }
+
+    .status-option {
+        position: relative;
+    }
+
+        .status-option input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+    .status-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 58px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        background: #fff;
+        cursor: pointer;
+        font-size: 14px;
+        color: #555;
+        transition: .2s;
+        box-sizing: border-box;
+    }
+
+        .status-label:hover {
+            background: #fafafa;
+            border-color: #cfcfcf;
+        }
+
+    .status-option input:checked + .status-label {
+        background: #f1ecf8;
+        border-color: #c9b9df;
+        color: #5f4b8b;
+        font-weight: 600;
+    }
+
+    .status-icon {
+        font-size: 18px;
+    }
+
+
+    /* =========================
+           Form
+           ========================= */
+
+    .form-group {
+        margin-bottom: 23px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #555;
+    }
+
+    .form-input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 12px 13px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        font-size: 14px;
+        outline: none;
+        background: white;
+    }
+
+        .form-input:focus {
+            border-color: #b9a8d3;
+        }
+
+    textarea.form-input {
+        min-height: 110px;
+        resize: vertical;
+    }
+
+    .input-help {
+        margin-top: 6px;
+        font-size: 11px;
+        color: #999;
+    }
+
+
+    /* =========================
+           Buttons
+           ========================= */
+
+    .progress-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 28px;
+    }
+
+    .progress-btn {
+        border: none;
+        border-radius: 10px;
+        padding: 11px 20px;
+        font-size: 13px;
+        text-decoration: none;
+        cursor: pointer;
+        transition: .2s;
+    }
+
+    .btn-save {
+        background: #e8def8;
+        color: #5f4b8b;
+    }
+
+        .btn-save:hover {
+            background: #d9c8f0;
+        }
+
+    .btn-back {
+        background: #f3f3f3;
+        color: #555;
+    }
+
+        .btn-back:hover {
+            background: #e7e7e7;
+        }
+
+
+    /* =========================
+           Validation
+           ========================= */
+
+    .text-danger {
+        color: #d66;
+        font-size: 12px;
+        margin-top: 5px;
+        display: block;
+    }
+
+
+    /* =========================
+           Responsive
+           ========================= */
+
+    @@media (max-width: 650px) {
+
+        .progress-page {
+            padding: 15px;
+        }
+
+        .progress-card {
+            padding: 20px;
+        }
+
+        .status-options {
+            grid-template-columns: 1fr;
+        }
+
+        .progress-actions {
+            flex-direction: column;
+        }
+
+        .progress-btn {
+            text-align: center;
+        }
+    }
+
+</style>
+
+
+<div class="progress-page">
+
+
+    <!-- =========================
+         Header
+         ========================= -->
+
+    <div class="progress-header">
+
+        <h2>
+            บันทึกผลการอ่าน
+        </h2>
+
+        <p>
+            บันทึกผลการเรียนของช่วงเวลานี้
+        </p>
+
+    </div>
+
+
+    <!-- =========================
+         Main Card
+         ========================= -->
+
+    <div class="progress-card">
+
+
+        <!-- =========================
+             Subject Information
+             ========================= -->
+
+        <div class="subject-box">
+
+            <div class="subject-name">
+
+                @schedule.SubjectName
+
+            </div>
+
+
+            <div class="subject-time">
+
+                @schedule.StudyDate.ToString("dd/MM/yyyy")
+
+                &nbsp; • &nbsp;
+
+                @schedule.StartTime.Hours.ToString("D2"):
+                @schedule.StartTime.Minutes.ToString("D2")
+
+                -
+
+                @schedule.EndTime.Hours.ToString("D2"):
+                @schedule.EndTime.Minutes.ToString("D2")
+
+            </div>
+
+        </div>
+
+
+        <!-- =========================
+             Form
+             ========================= -->
+
+        <form asp-action="Create"
+              method="post">
+
+            <input type="hidden"
+                   asp-for="ScheduleId" />
+
+
+            <!-- =========================
+                 Reading Status
+                 ========================= -->
+
+            <div class="form-group">
+
+                <div class="section-title">
+                    ผลการอ่าน
+                </div>
+
+
+                <div class="status-options">
+
+
+                    <!-- ทำครบ -->
+
+                    <div class="status-option">
+
+                        <input type="radio"
+                               asp-for="ProgressPercent"
+                               value="100"
+                               id="statusComplete" />
+
+                        <label for="statusComplete"
+                               class="status-label">
+
+                            <span class="status-icon">
+                                ✓
+                            </span>
+
+                            ทำครบ
+
+                        </label>
+
+                    </div>
+
+
+                    <!-- ทำบางส่วน -->
+
+                    <div class="status-option">
+
+                        <input type="radio"
+                               asp-for="ProgressPercent"
+                               value="50"
+                               id="statusPartial" />
+
+                        <label for="statusPartial"
+                               class="status-label">
+
+                            <span class="status-icon">
+                                ◐
+                            </span>
+
+                            ทำบางส่วน
+
+                        </label>
+
+                    </div>
+
+
+                    <!-- ไม่ได้อ่าน -->
+
+                    <div class="status-option">
+
+                        <input type="radio"
+                               asp-for="ProgressPercent"
+                               value="0"
+                               id="statusNone" />
+
+                        <label for="statusNone"
+                               class="status-label">
+
+                            <span class="status-icon">
+                                ×
+                            </span>
+
+                            ไม่ได้อ่าน
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+
+                <span asp-validation-for="ProgressPercent"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+
+            <!-- =========================
+                 Actual Reading Time
+                 ========================= -->
+
+            <div class="form-group">
+
+                <label asp-for="ActualMinutes"
+                       class="form-label">
+
+                    เวลาอ่านจริง
+
+                </label>
+
+
+                <input asp-for="ActualMinutes"
+                       type="number"
+                       min="0"
+                       max="1440"
+                       class="form-input"
+                       placeholder="เช่น 45" />
+
+
+                <div class="input-help">
+
+                    ระบุจำนวนเวลาที่อ่านจริงเป็นนาที
+
+                </div>
+
+
+                <span asp-validation-for="ActualMinutes"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+
+            <!-- =========================
+                 Note
+                 ========================= -->
+
+            <div class="form-group">
+
+                <label asp-for="Note"
+                       class="form-label">
+
+                    Note
+
+                </label>
+
+
+                <textarea asp-for="Note"
+                          class="form-input"
+                          placeholder="เช่น อ่านบทที่ 1-3 แล้ว หรือมีหัวข้อที่ยังไม่เข้าใจ"></textarea>
+
+
+                <span asp-validation-for="Note"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+
+            <!-- =========================
+                 Buttons
+                 ========================= -->
+
+            <div class="progress-actions">
+
+
+                <button type="submit"
+                        class="progress-btn btn-save">
+
+                    บันทึกผล
+
+                </button>
+
+
+                <a href="@Url.Action(
+                    "ViewSchedule",
+                    "Schedule",
+                    new { id = schedule.StudyActivityId })"
+                   class="progress-btn btn-back">
+
+                    ยกเลิก
+
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>

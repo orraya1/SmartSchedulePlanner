@@ -13,11 +13,29 @@
     var today =
         (DateTime)ViewBag.Today;
 
+    var previousDay =
+        today.AddDays(-1);
+
+    var nextDay =
+        today.AddDays(1);
+
     var weekStart =
         (DateTime)ViewBag.WeekStart;
 
+    var previousWeek =
+        weekStart.AddDays(-7);
+
+    var nextWeek =
+        weekStart.AddDays(7);
+
     var monthStart =
         (DateTime)ViewBag.MonthStart;
+
+    var previousMonth =
+        monthStart.AddMonths(-1);
+
+    var nextMonth =
+        monthStart.AddMonths(1);
 
     var todaySchedules =
         (IEnumerable<SmartSchedulePlanner.Models.Schedule>)
@@ -44,11 +62,33 @@
             monthStart.Year,
             monthStart.Month);
 
-    var calendarCells =
-        firstDayOffset + daysInMonth;
-
     var totalHours =
         (double)ViewBag.TotalStudyHours;
+
+    int weekStartHour = 6;
+    int weekEndHour = 18;
+
+    if (weekSchedules != null && weekSchedules.Any())
+    {
+        weekStartHour = (int)Math.Floor(
+            weekSchedules.Min(x =>
+                x.StartTime.TotalHours));
+
+        weekEndHour = (int)Math.Ceiling(
+            weekSchedules.Max(x =>
+                x.EndTime.TotalHours));
+    }
+
+    if (weekEndHour <= weekStartHour)
+    {
+        weekEndHour = weekStartHour + 1;
+    }
+
+    int weekTotalHours =
+        weekEndHour - weekStartHour;
+
+    double weekCalendarHeight =
+        weekTotalHours * 70;
 
     var colors = new[]
     {
@@ -64,321 +104,516 @@
 
 <style>
 
-    body {
-        background: #f5f1ea;
+    .dashboard-page {
+        padding: 25px;
     }
 
-    .dashboard {
-        padding: 30px;
-        color: #555;
+    /* =========================
+           Header
+           ========================= */
+
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
     }
 
-    /* HEADER */
-
-    .welcome-card {
-        background: #fff;
-        border-radius: 22px;
-        padding: 30px;
-        margin-bottom: 22px;
-        box-shadow: 0 4px 18px rgba(0,0,0,.04);
+    .dashboard-title h2 {
+        margin: 0;
+        font-size: 30px;
+        font-weight: 600;
+        color: #444;
     }
 
-        .welcome-card h1 {
-            font-size: 34px;
-            margin: 0;
-            color: #444;
-            font-weight: 500;
-        }
+    .dashboard-title p {
+        margin: 6px 0 0;
+        color: #888;
+    }
 
-        .welcome-card p {
-            margin-top: 8px;
-            color: #999;
-        }
-
-    /* SUMMARY */
+    /* =========================
+           Summary Cards
+           ========================= */
 
     .summary-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
+        gap: 15px;
         margin-bottom: 25px;
     }
 
     .summary-card {
-        border-radius: 18px;
-        padding: 22px;
-        min-height: 120px;
+        background: white;
+        border-radius: 14px;
+        padding: 18px 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,.05);
     }
 
-        .summary-card:nth-child(1) {
-            background: #dcebd5;
-        }
+    .summary-label {
+        font-size: 13px;
+        color: #888;
+        margin-bottom: 7px;
+    }
 
-        .summary-card:nth-child(2) {
-            background: #f3dddd;
-        }
-
-        .summary-card:nth-child(3) {
-            background: #eee2d1;
-        }
-
-    .summary-number {
-        font-size: 30px;
+    .summary-value {
+        font-size: 25px;
         font-weight: 600;
-        color: #555;
+        color: #444;
     }
 
-    .summary-title {
-        margin-top: 5px;
-        color: #777;
+    .summary-sub {
+        font-size: 12px;
+        color: #999;
+        margin-top: 3px;
     }
 
-    /* TABS */
+    /* =========================
+           Tabs
+           ========================= */
 
-    .schedule-tabs {
+    .dashboard-tabs {
         display: flex;
         gap: 8px;
         margin-bottom: 15px;
     }
 
-    .schedule-tab {
-        border: none;
-        background: transparent;
-        padding: 8px 18px;
-        border-radius: 20px;
+    .dashboard-tab {
+        padding: 9px 16px;
+        border-radius: 9px;
+        text-decoration: none;
+        font-size: 13px;
         color: #777;
-        cursor: pointer;
-        font-size: 15px;
+        background: #f3f3f3;
+        transition: .2s;
     }
 
-        .schedule-tab.active {
-            background: #e9d9bd;
-            color: #555;
+        .dashboard-tab:hover {
+            background: #e9e9e9;
         }
 
-    .schedule-panel {
-        display: none;
-    }
-
-        .schedule-panel.active {
-            display: block;
+        .dashboard-tab.active {
+            background: #e8def8;
+            color: #5f4b8b;
+            font-weight: 600;
         }
 
-    /* CARD */
+    /* =========================
+           Navigation
+           ========================= */
 
-    .schedule-card {
-        background: #fff;
-        border-radius: 20px;
-        padding: 22px;
-        box-shadow: 0 4px 18px rgba(0,0,0,.04);
-    }
-
-        .schedule-card h3 {
-            margin-top: 0;
-            color: #555;
-            font-weight: 500;
-        }
-
-    /* TODAY */
-
-    .today-list {
+    .calendar-navigation {
         display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .today-item {
-        display: grid;
-        grid-template-columns: 120px 1fr;
+        justify-content: space-between;
         align-items: center;
-        padding: 15px;
+        background: white;
+        padding: 13px 18px;
         border-radius: 12px;
-        background: #faf8f4;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,.04);
     }
 
-    .today-time {
-        color: #888;
-        font-size: 14px;
-    }
-
-    .today-subject {
-        font-size: 16px;
-        font-weight: 500;
+    .navigation-title {
+        font-size: 15px;
+        font-weight: 600;
         color: #555;
     }
 
-    /* WEEK */
+    .navigation-buttons {
+        display: flex;
+        gap: 7px;
+    }
+
+    .navigation-btn {
+        width: 34px;
+        height: 34px;
+        border: none;
+        border-radius: 8px;
+        background: #f3f3f3;
+        color: #555;
+        cursor: pointer;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: .2s;
+    }
+
+        .navigation-btn:hover {
+            background: #e8e8e8;
+        }
+
+    /* =========================
+           Calendar
+           ========================= */
+
+    .calendar-container {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,.05);
+        overflow-x: auto;
+    }
+
+    /* =========================
+           Week Calendar
+           ========================= */
 
     .week-calendar {
-        display: grid;
-        grid-template-columns: 70px repeat(7, 1fr);
-        overflow-x: auto;
-        min-width: 950px;
+        min-width: 1050px;
     }
 
     .week-header {
-        text-align: center;
-        padding: 12px 5px;
-        border-bottom: 1px solid #eee;
-        font-weight: 600;
+        display: grid;
+        grid-template-columns: 75px repeat(7, 1fr);
+        border-bottom: 1px solid #ddd;
     }
 
-        .week-header small {
+    .week-header-empty {
+        height: 55px;
+    }
+
+    .week-day-header {
+        height: 55px;
+        text-align: center;
+        padding-top: 8px;
+        box-sizing: border-box;
+        font-size: 13px;
+        font-weight: 600;
+        color: #444;
+    }
+
+        .week-day-header small {
             display: block;
-            color: #aaa;
             margin-top: 4px;
+            color: #999;
+            font-weight: 400;
         }
 
-    .time-column {
-        color: #999;
+    .week-body {
+        display: grid;
+        grid-template-columns: 75px repeat(7, 1fr);
     }
 
-    .time-label {
+    .week-time-column {
+        border-right: 1px solid #eee;
+    }
+
+    .week-time-label {
         height: 70px;
-        text-align: right;
-        padding-right: 8px;
-        padding-top: 5px;
-        font-size: 12px;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 10px;
+        border-bottom: 1px solid #eee;
+        font-size: 11px;
+        color: #888;
+        white-space: nowrap;
     }
 
     .week-day {
         position: relative;
-        height: 840px;
         border-left: 1px solid #eee;
-        background: repeating-linear-gradient( to bottom, transparent 0, transparent 69px, #eeeeee 70px );
+        background: repeating-linear-gradient( to bottom, white 0, white 69px, #eeeeee 69px, #eeeeee 70px );
     }
+
+    /* =========================
+           Grouped Activities
+           ========================= */
+
+    .activity-group-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .activity-group-card {
+        background: white;
+        border-radius: 10px;
+        padding: 11px 13px;
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+        border-left: 4px solid #ddd;
+    }
+
+    .activity-group-name {
+        font-size: 12px;
+        font-weight: 600;
+        color: #555;
+        margin-bottom: 5px;
+    }
+
+    .activity-group-subjects {
+        font-size: 10px;
+        color: #888;
+        line-height: 1.5;
+    }
+
+    .activity-group-hours {
+        margin-top: 5px;
+        font-size: 10px;
+        color: #777;
+    }
+
+    /* =========================
+           Week Event
+           ========================= */
 
     .week-event {
         position: absolute;
         left: 4px;
         right: 4px;
-        border-radius: 9px;
-        padding: 7px;
+        box-sizing: border-box;
+        border-radius: 10px;
+        padding: 9px 10px;
+        border: 1px solid rgba(0,0,0,.08);
         overflow: hidden;
-        font-size: 12px;
+        transition: .2s;
     }
+
+        .week-event:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(0,0,0,.08);
+        }
 
         .week-event strong {
             display: block;
-            color: #555;
+            font-size: 13px;
+            font-weight: 600;
+            color: #444;
+            line-height: 1.3;
         }
 
-        .week-event small {
-            color: #777;
-        }
-
-    /* MONTH */
-
-    .month-title {
-        text-align: center;
-        font-size: 20px;
-        margin-bottom: 20px;
-        color: #666;
-    }
-
-    .month-calendar {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 5px;
-    }
-
-    .month-day-name {
-        text-align: center;
-        padding: 10px;
-        font-size: 13px;
-        color: #999;
-    }
-
-    .month-cell {
-        min-height: 110px;
-        background: #faf9f6;
-        border-radius: 10px;
-        padding: 8px;
-    }
-
-        .month-cell.today {
-            border: 2px solid #d8bd91;
-        }
-
-    .month-number {
-        font-size: 13px;
+    .week-event-activity {
+        font-size: 9px;
+        font-weight: 600;
         color: #777;
-        margin-bottom: 5px;
-    }
-
-    .month-event {
-        padding: 4px 6px;
-        border-radius: 6px;
-        font-size: 10px;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
-    .empty {
-        padding: 50px;
+        .week-event small {
+            display: block;
+            margin-top: 4px;
+            font-size: 10px;
+            color: #777;
+        }
+
+    /* =========================
+           ปุ่มบันทึกผล
+           ========================= */
+
+    .week-progress-btn {
+        position: absolute;
+        top: 7px;
+        right: 7px;
+        padding: 3px 7px;
+        border-radius: 6px;
+        background: rgba(255,255,255,.8);
+        color: #555;
+        font-size: 9px;
+        text-decoration: none;
+        transition: .2s;
+    }
+
+        .week-progress-btn:hover {
+            background: white;
+            color: #333;
+        }
+
+    /* =========================
+           Day View
+           ========================= */
+
+    .day-calendar {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .day-calendar th {
+            background: #f8f8f8;
+            color: #666;
+            font-weight: 600;
+            font-size: 13px;
+            padding: 13px;
+            text-align: left;
+        }
+
+        .day-calendar td {
+            padding: 14px 13px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #555;
+            font-size: 14px;
+        }
+
+    .day-subject {
+        font-weight: 600;
+        color: #444;
+    }
+
+    /* =========================
+           Month View
+           ========================= */
+
+    .month-calendar {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        min-width: 900px;
+        border-top: 1px solid #eee;
+        border-left: 1px solid #eee;
+    }
+
+    .month-weekday {
+        padding: 10px;
         text-align: center;
+        font-size: 12px;
+        font-weight: 600;
+        color: #777;
+        background: #f8f8f8;
+        border-right: 1px solid #eee;
+        border-bottom: 1px solid #eee;
+    }
+
+    .month-day {
+        min-height: 110px;
+        padding: 8px;
+        border-right: 1px solid #eee;
+        border-bottom: 1px solid #eee;
+        box-sizing: border-box;
+    }
+
+    .month-day-number {
+        font-size: 12px;
+        font-weight: 600;
+        color: #666;
+        margin-bottom: 5px;
+    }
+
+    .month-event {
+        background: #e8def8;
+        color: #5f4b8b;
+        border-radius: 6px;
+        padding: 5px 6px;
+        margin-bottom: 4px;
+        font-size: 10px;
+        overflow: hidden;
+    }
+
+        .month-event strong {
+            display: block;
+            font-size: 10px;
+        }
+
+        .month-event small {
+            font-size: 9px;
+            color: #777;
+        }
+
+    /* =========================
+           Empty
+           ========================= */
+
+    .empty-dashboard {
+        text-align: center;
+        padding: 60px 20px;
         color: #999;
     }
 
-    @@media (max-width: 1200px) {
-        .summary-grid
-
-    {
-        grid-template-columns: 1fr;
+    .empty-dashboard-icon {
+        font-size: 40px;
+        margin-bottom: 10px;
     }
 
-    .dashboard {
-        padding: 15px;
+    .empty-dashboard-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #777;
     }
 
+    /* =========================
+           Responsive
+           ========================= */
+
+    @@media (max-width: 900px) {
+
+        .dashboard-page {
+            padding: 15px;
+        }
+
+        .summary-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .calendar-navigation {
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-start;
+        }
     }
+
 </style>
 
 
-<div class="dashboard">
+<div class="dashboard-page">
 
-    <!-- HEADER -->
+    <!-- =========================
+         Header
+         ========================= -->
 
-    <div class="welcome-card">
+    <div class="dashboard-header">
 
-        <h1>
-            Smart Schedule Planner
-        </h1>
+        <div class="dashboard-title">
 
-        <p>
-            ตารางกิจกรรมการอ่านหนังสือของคุณ
-        </p>
+            <h2>
+                Smart Study Planner
+            </h2>
+
+            <p>
+                ภาพรวมตารางอ่านหนังสือของคุณ
+            </p>
+
+        </div>
 
     </div>
 
 
-    <!-- SUMMARY -->
+    <!-- =========================
+         Summary
+         ========================= -->
 
     <div class="summary-grid">
 
         <div class="summary-card">
 
-            <div class="summary-number">
-                @ViewBag.TotalActivities
-            </div>
-
-            <div class="summary-title">
+            <div class="summary-label">
                 กิจกรรมทั้งหมด
             </div>
 
+            <div class="summary-value">
+                @ViewBag.TotalActivities
+            </div>
+
+            <div class="summary-sub">
+                กิจกรรม
+            </div>
+
         </div>
 
 
         <div class="summary-card">
 
-            <div class="summary-number">
+            <div class="summary-label">
+                จำนวนวิชา
+            </div>
+
+            <div class="summary-value">
                 @ViewBag.TotalSubjects
             </div>
 
-            <div class="summary-title">
-                วิชาทั้งหมด
+            <div class="summary-sub">
+                วิชา
             </div>
 
         </div>
@@ -386,96 +621,205 @@
 
         <div class="summary-card">
 
-            <div class="summary-number">
-                @totalHours.ToString("0.##")h
-            </div>
-
-            <div class="summary-title">
+            <div class="summary-label">
                 ชั่วโมงอ่านทั้งหมด
             </div>
 
+            <div class="summary-value">
+                @totalHours.ToString("0.##")
+            </div>
+
+            <div class="summary-sub">
+                ชั่วโมง
+            </div>
+
         </div>
 
     </div>
 
 
-    <!-- TABS -->
+    <!-- =========================
+         Tabs
+         ========================= -->
 
-    <div class="schedule-tabs">
+    <div class="dashboard-tabs">
 
-        <button class="schedule-tab active"
-                onclick="showSchedule('today', this)">
+        <a href="#day"
+           class="dashboard-tab"
+           id="dayTab">
 
             รายวัน
 
-        </button>
+        </a>
 
-        <button class="schedule-tab"
-                onclick="showSchedule('week', this)">
+        <a href="#week"
+           class="dashboard-tab active"
+           id="weekTab">
 
             รายสัปดาห์
 
-        </button>
+        </a>
 
-        <button class="schedule-tab"
-                onclick="showSchedule('month', this)">
+        <a href="#month"
+           class="dashboard-tab"
+           id="monthTab">
 
             รายเดือน
 
-        </button>
+        </a>
 
     </div>
 
 
-    <!-- ================= TODAY ================= -->
+    <!-- =========================
+         DAY
+         ========================= -->
 
-    <div id="today"
-         class="schedule-panel active">
+    <div id="dayView">
 
-        <div class="schedule-card">
+        <div class="calendar-navigation">
 
-            <h3>
-                ตารางกิจกรรมวันนี้
-            </h3>
+            <div class="navigation-title">
 
-            <p style="color:#aaa;">
-                @today.ToString("dddd dd MMMM yyyy",
+                @today.ToString(
+                         "dddd dd MMMM yyyy",
                          new CultureInfo("th-TH"))
-            </p>
 
+            </div>
 
-            @if (todaySchedules.Any())
+            <div class="navigation-buttons">
+
+                <a class="navigation-btn"
+                   href="?date=@previousDay.ToString("yyyy-MM-dd")#day">
+
+                    ‹
+
+                </a>
+
+                <a class="navigation-btn"
+                   href="?date=@DateTime.Today.ToString("yyyy-MM-dd")#day">
+
+                    วันนี้
+
+                </a>
+
+                <a class="navigation-btn"
+                   href="?date=@nextDay.ToString("yyyy-MM-dd")#day">
+
+                    ›
+
+                </a>
+
+            </div>
+
+        </div>
+
+        @if (weekSchedules != null && weekSchedules.Any())
+        {
+            var activityGroups = weekSchedules
+            .Where(x => x.StudyActivity != null)
+            .GroupBy(x => new
             {
-                <div class="today-list">
+                x.StudyActivityId,
+                ActivityName = x.StudyActivity!.ActivityName,
+                Color = x.StudyActivity.Color
+            })
+            .OrderBy(x => x.Key.ActivityName)
+            .ToList();
 
-                    @foreach (var item in todaySchedules)
-                    {
-                        <div class="today-item">
+            <div class="activity-group-summary">
 
-                            <div class="today-time">
+                @foreach (var group in activityGroups)
+                {
+                    var subjects = group
+                    .Select(x => x.SubjectName)
+                    .Distinct()
+                    .ToList();
 
-                                @item.StartTime.ToString(@"hh\:mm")
-                                -
-                                @item.EndTime.ToString(@"hh\:mm")
+                    var hours = group.Sum(x =>
+                    (x.EndTime - x.StartTime).TotalHours);
 
-                            </div>
+                    <div class="activity-group-card"
+                         style="border-left-color:@group.Key.Color;">
 
-                            <div class="today-subject">
-
-                                @item.SubjectName
-
-                            </div>
-
+                        <div class="activity-group-name">
+                            @group.Key.ActivityName
                         </div>
-                    }
 
-                </div>
+                        <div class="activity-group-subjects">
+                            @string.Join(" • ", subjects)
+                        </div>
+
+                        <div class="activity-group-hours">
+                            @hours.ToString("0.##") ชั่วโมง
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+        }
+
+        <div class="calendar-container">
+
+            @if (todaySchedules != null && todaySchedules.Any())
+            {
+                <table class="day-calendar">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                เวลา
+                            </th>
+
+                            <th>
+                                วิชา
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var item in todaySchedules)
+                        {
+                            <tr>
+
+                                <td>
+
+                                    @item.StartTime.ToString(@"hh\:mm")
+                                    -
+                                    @item.EndTime.ToString(@"hh\:mm")
+
+                                </td>
+
+                                <td class="day-subject">
+
+                                    @item.SubjectName
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
             }
             else
             {
-                <div class="empty">
+                <div class="empty-Home">
 
-                    วันนี้ยังไม่มีตารางอ่านหนังสือ
+                    <div class="empty-Home-icon">
+                        📅
+                    </div>
+
+                    <div class="empty-Home-title">
+                        วันนี้ยังไม่มีตารางอ่านหนังสือ
+                    </div>
 
                 </div>
             }
@@ -485,48 +829,73 @@
     </div>
 
 
-    <!-- ================= WEEK ================= -->
+    <!-- =========================
+         WEEK
+         ========================= -->
 
-    <div id="week"
-         class="schedule-panel">
+    <div id="weekView">
 
-        <div class="schedule-card">
+        <div class="calendar-navigation">
 
-            <h3>
-                ตารางกิจกรรมประจำสัปดาห์
-            </h3>
+            <div class="navigation-title">
 
-            <div style="overflow-x:auto;">
+                @weekStart.ToString("dd/MM/yyyy")
+                -
+                @weekStart.AddDays(6).ToString("dd/MM/yyyy")
 
+            </div>
+
+            <div class="navigation-buttons">
+
+                <a class="navigation-btn"
+                   href="?weekStartDate=@previousWeek.ToString("yyyy-MM-dd")#week">
+
+                    ‹
+
+                </a>
+
+                <a class="navigation-btn"
+                   href="?weekStartDate=@DateTime.Today
+                       .AddDays(
+                           -(7 + ((int)DateTime.Today.DayOfWeek - 1)) % 7)
+                       .ToString(" yyyy-MM-dd")#week">
+
+                    วันนี้
+
+                </a>
+
+                <a class="navigation-btn"
+                   href="?weekStartDate=@nextWeek.ToString("yyyy-MM-dd")#week">
+
+                    ›
+
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <div class="calendar-container">
+
+            @if (weekSchedules != null && weekSchedules.Any())
+            {
                 <div class="week-calendar">
 
-                    <!-- Header -->
+                    <div class="week-header">
 
-                    <div></div>
-
-                    @foreach (var day in days)
-                    {
-                        <div class="week-header">
-
-                            @day.ToString("ddd")
-
-                            <small>
-                                @day.ToString("dd/MM")
-                            </small>
-
+                        <div class="week-header-empty">
                         </div>
-                    }
 
-
-                    <!-- Time -->
-
-                    <div class="time-column">
-
-                        @for (int hour = 6; hour <= 17; hour++)
+                        @foreach (var day in days)
                         {
-                            <div class="time-label">
+                            <div class="week-day-header">
 
-                                @hour.ToString("00"):00
+                                @day.ToString("ddd")
+
+                                <small>
+                                    @day.ToString("dd/MM")
+                                </small>
 
                             </div>
                         }
@@ -534,117 +903,225 @@
                     </div>
 
 
-                    <!-- Days -->
-                    @foreach (var day in days)
-                    {
-                        <div class="week-day">
+                    <div class="week-body">
 
-                            @{
-                                var daySchedules =
-                                weekSchedules
-                                .Where(x =>
-                                x.StudyDate.Date ==
-                                day.Date)
-                                .ToList();
+                        <div class="week-time-column">
 
-                                int colorIndex = 0;
-                            }
-
-                            @foreach (var item in daySchedules)
+                            @for (
+                           int hour = weekStartHour;
+                           hour < weekEndHour;
+                           hour++
+                           )
                             {
-                                double top =
-                                (item.StartTime.TotalHours - 6)
-                                * 70;
+                                <div class="week-time-label">
 
-                                double height =
-                                (item.EndTime -
-                                item.StartTime)
-                                .TotalHours * 70;
-
-                                var color =
-                                colors[
-                                colorIndex %
-                                colors.Length
-                                ];
-
-                                colorIndex++;
-
-                                <div class="week-event"
-                                     style="
-                                        top:@top.ToString(
-                                            "0.##",
-                                            CultureInfo.InvariantCulture)px;
-
-                                        height:@height.ToString(
-                                            "0.##",
-                                            CultureInfo.InvariantCulture)px;
-
-                                        background:@color;
-                                             ">
-
-                                    <strong>
-                                        @item.SubjectName
-                                    </strong>
-
-                                    <small>
-
-                                        @item.StartTime.ToString(@"hh\:mm")
-                                        -
-                                        @item.EndTime.ToString(@"hh\:mm")
-
-                                    </small>
+                                    @($"{hour:00}:00 - {(hour + 1):00}")
 
                                 </div>
                             }
 
                         </div>
-                    }
+
+
+                        @foreach (var day in days)
+                        {
+                            <div class="week-day"
+                                 style="
+                                    height:@weekCalendarHeight.ToString(
+                                        "0.##",
+                                        CultureInfo.InvariantCulture)px;
+                                         ">
+
+                                @{
+                                    var daySchedules =
+                                    weekSchedules
+                                    .Where(x =>
+                                    x.StudyDate.Date == day.Date)
+                                    .ToList();
+                                }
+
+                                @foreach (var item in daySchedules)
+                                {
+                                    double top =
+                                    (
+                                    item.StartTime.TotalHours
+                                    - weekStartHour
+                                    ) * 70;
+
+                                    double height =
+                                    (
+                                    item.EndTime
+                                    - item.StartTime
+                                    ).TotalHours * 70;
+
+                                    var color =
+                                    !string.IsNullOrWhiteSpace(item.StudyActivity?.Color)
+                                    ? item.StudyActivity.Color
+                                    : "#DDE9D5";
+
+                                    <div class="week-event"
+                                         style="
+                                            top:@top.ToString(
+                                                "0.##",
+                                                CultureInfo.InvariantCulture)px;
+
+                                            height:@height.ToString(
+                                                "0.##",
+                                                CultureInfo.InvariantCulture)px;
+
+                                            background:@color;
+                                                     ">
+
+                                        <div class="week-event-activity">
+                                            @item.StudyActivity?.ActivityName
+                                        </div>
+
+                                        <strong>
+                                            @item.SubjectName
+                                        </strong>
+
+                                        <small>
+
+                                            @item.StartTime.ToString(
+                                                     @"hh\:mm")
+
+                                            -
+
+                                            @item.EndTime.ToString(
+                                                     @"hh\:mm")
+
+                                        </small>
+
+                                        <!-- เพิ่มเฉพาะปุ่มนี้ -->
+
+                                        <a href="@Url.Action(
+                                            "Create",
+                                            "StudyProgress",
+                                            new { scheduleId = item.Id })"
+                                           class="week-progress-btn">
+
+                                            บันทึกผล
+
+                                        </a>
+
+                                    </div>
+                                }
+
+                            </div>
+                        }
+
+                    </div>
 
                 </div>
+            }
+            else
+            {
+                <div class="empty-Home">
 
-            </div>
+                    <div class="empty-Home-icon">
+                        📅
+                    </div>
+
+                    <div class="empty-Home-title">
+                        สัปดาห์นี้ยังไม่มีตารางอ่านหนังสือ
+                    </div>
+
+                </div>
+            }
 
         </div>
 
     </div>
 
 
-    <!-- ================= MONTH ================= -->
+    <!-- =========================
+         MONTH
+         ========================= -->
 
-    <div id="month"
-         class="schedule-panel">
+    <div id="monthView">
 
-        <div class="schedule-card">
+        <div class="calendar-navigation">
 
-            <div class="month-title">
+            <div class="navigation-title">
 
                 @monthStart.ToString(
                          "MMMM yyyy",
-                         new CultureInfo("en-US"))
+                         new CultureInfo("th-TH"))
 
             </div>
 
+            <div class="navigation-buttons">
+
+                <a class="navigation-btn"
+                   href="?month=@previousMonth.Month&year=@previousMonth.Year#month">
+
+                    ‹
+
+                </a>
+
+                <a class="navigation-btn"
+                   href="?month=@DateTime.Today.Month&year=@DateTime.Today.Year#month">
+
+                    วันนี้
+
+                </a>
+
+                <a class="navigation-btn"
+                   href="?month=@nextMonth.Month&year=@nextMonth.Year#month">
+
+                    ›
+
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <div class="calendar-container">
 
             <div class="month-calendar">
 
-                <div class="month-day-name">Mon</div>
-                <div class="month-day-name">Tue</div>
-                <div class="month-day-name">Wed</div>
-                <div class="month-day-name">Thu</div>
-                <div class="month-day-name">Fri</div>
-                <div class="month-day-name">Sat</div>
-                <div class="month-day-name">Sun</div>
+                <div class="month-weekday">
+                    จ.
+                </div>
+
+                <div class="month-weekday">
+                    อ.
+                </div>
+
+                <div class="month-weekday">
+                    พ.
+                </div>
+
+                <div class="month-weekday">
+                    พฤ.
+                </div>
+
+                <div class="month-weekday">
+                    ศ.
+                </div>
+
+                <div class="month-weekday">
+                    ส.
+                </div>
+
+                <div class="month-weekday">
+                    อา.
+                </div>
 
 
                 @for (int i = 0; i < firstDayOffset; i++)
                 {
-                    <div></div>
+                    <div class="month-day"></div>
                 }
 
 
-                @for (int dayNumber = 1;
+                @for (
+                int dayNumber = 1;
                 dayNumber <= daysInMonth;
-                dayNumber++)
+                dayNumber++
+                )
                 {
                     var currentDate =
                     new DateTime(
@@ -652,41 +1129,41 @@
                     monthStart.Month,
                     dayNumber);
 
-                    var dayEvents =
+                    var currentSchedules =
                     monthSchedules
                     .Where(x =>
                     x.StudyDate.Date ==
                     currentDate.Date)
+                    .OrderBy(x => x.StartTime)
                     .ToList();
 
-                    <div class="month-cell
-                         @(currentDate.Date == today.Date
-                             ? "today"
-                             : "")">
+                    <div class="month-day">
 
-                        <div class="month-number">
+                        <div class="month-day-number">
 
                             @dayNumber
 
                         </div>
 
-
-                        @foreach (var item in dayEvents)
+                        @foreach (var item in currentSchedules)
                         {
-                            <div class="month-event"
-                                 style="
-                                    background:
-                                    @colors[
-                                        item.Id %
-                                        colors.Length
-                                    ];
-                                         ">
+                            <div class="month-event">
 
-                                @item.SubjectName
+                                <strong>
+                                    @item.SubjectName
+                                </strong>
 
-                                <br />
+                                <small>
 
-                                @item.StartTime.ToString(@"hh\:mm")
+                                    @item.StartTime.ToString(
+                                             @"hh\:mm")
+
+                                    -
+
+                                    @item.EndTime.ToString(
+                                             @"hh\:mm")
+
+                                </small>
 
                             </div>
                         }
@@ -703,67 +1180,115 @@
 </div>
 
 
-<style>
-    .summary-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
-        margin-bottom: 25px;
-    }
-
-    .summary-card {
-        background: #ffffff !important;
-        background-color: #ffffff !important;
-        border: 1px solid #eeeeee;
-        border-radius: 18px;
-        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
-        padding: 25px;
-    }
-
-    .summary-number {
-        color: #333333 !important;
-        font-size: 32px;
-        font-weight: 600;
-    }
-
-    .summary-title {
-        color: #777777 !important;
-        font-size: 16px;
-        margin-top: 8px;
-    }
-
-    @@media (max-width: 900px) {
-        .summary-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>
-
 <script>
 
-    function showSchedule(type, button) {
+    document.addEventListener("DOMContentLoaded", function () {
 
-        document
-            .querySelectorAll(".schedule-panel")
-            .forEach(function (panel) {
+        const dayTab =
+            document.getElementById("dayTab");
 
-                panel.classList.remove("active");
+        const weekTab =
+            document.getElementById("weekTab");
 
-            });
+        const monthTab =
+            document.getElementById("monthTab");
 
-        document
-            .querySelectorAll(".schedule-tab")
-            .forEach(function (tab) {
+        const dayView =
+            document.getElementById("dayView");
 
-                tab.classList.remove("active");
+        const weekView =
+            document.getElementById("weekView");
 
-            });
+        const monthView =
+            document.getElementById("monthView");
 
-        document
-            .getElementById(type)
-            .classList.add("active");
 
-        button.classList.add("active");
-    }
+        function showView(view) {
+
+            dayView.style.display = "none";
+
+            weekView.style.display = "none";
+
+            monthView.style.display = "none";
+
+            dayTab.classList.remove("active");
+
+            weekTab.classList.remove("active");
+
+            monthTab.classList.remove("active");
+
+
+            if (view === "day") {
+
+                dayView.style.display = "block";
+
+                dayTab.classList.add("active");
+
+            }
+            else if (view === "month") {
+
+                monthView.style.display = "block";
+
+                monthTab.classList.add("active");
+
+            }
+            else {
+
+                weekView.style.display = "block";
+
+                weekTab.classList.add("active");
+
+            }
+
+            window.location.hash = view;
+        }
+
+
+        dayTab.addEventListener("click", function (e) {
+
+            e.preventDefault();
+
+            showView("day");
+
+        });
+
+
+        weekTab.addEventListener("click", function (e) {
+
+            e.preventDefault();
+
+            showView("week");
+
+        });
+
+
+        monthTab.addEventListener("click", function (e) {
+
+            e.preventDefault();
+
+            showView("month");
+
+        });
+
+
+        const hash =
+            window.location.hash.replace("#", "");
+
+
+        if (
+            hash === "day" ||
+            hash === "month"
+        ) {
+
+            showView(hash);
+
+        }
+        else {
+
+            showView("week");
+
+        }
+
+    });
 
 </script>

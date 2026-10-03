@@ -75,6 +75,12 @@ namespace SmartSchedulePlanner.Controllers
 
         public IActionResult Logout()
         {
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult ConfirmLogout()
+        {
             HttpContext.Session.Clear();
             return RedirectToAction("Login");
         }

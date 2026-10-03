@@ -30,19 +30,18 @@ namespace SmartSchedulePlanner.Services
                 return new Chromosome();
             }
 
-            // สร้างประชากรเริ่มต้น
-            var population = CreatePopulation(
-                subjects,
-                timeSlots);
+            // สร้าง Population
+            var population =
+                CreatePopulation(subjects, timeSlots);
 
+            // =====================================================
             // Genetic Algorithm
+            // =====================================================
             for (int generation = 0;
                  generation < Generations;
                  generation++)
             {
-                // -----------------------------
-                // Fitness
-                // -----------------------------
+                // คำนวณ Fitness
                 foreach (var chromosome in population)
                 {
                     chromosome.Fitness =
@@ -51,18 +50,13 @@ namespace SmartSchedulePlanner.Services
                             subjects);
                 }
 
-                // -----------------------------
                 // Selection
-                // เลือกครึ่งหนึ่งที่ดีที่สุด
-                // -----------------------------
                 population = population
                     .OrderByDescending(x => x.Fitness)
                     .Take(PopulationSize / 2)
                     .ToList();
 
-                // -----------------------------
                 // Crossover + Mutation
-                // -----------------------------
                 while (population.Count < PopulationSize)
                 {
                     var parent1 =
@@ -86,7 +80,7 @@ namespace SmartSchedulePlanner.Services
                 }
             }
 
-            // คำนวณ Fitness รอบสุดท้าย
+            // Fitness รอบสุดท้าย
             foreach (var chromosome in population)
             {
                 chromosome.Fitness =
@@ -95,7 +89,7 @@ namespace SmartSchedulePlanner.Services
                         subjects);
             }
 
-            // คืน Chromosome ที่ดีที่สุด
+            // คืนผลลัพธ์ที่ดีที่สุด
             return population
                 .OrderByDescending(x => x.Fitness)
                 .First();
@@ -125,15 +119,16 @@ namespace SmartSchedulePlanner.Services
                         currentTime.Add(
                             TimeSpan.FromHours(1));
 
-                    // ถ้าเกินเวลาสิ้นสุด
+                    // ถ้าเกินเวลาสิ้นสุด ไม่สร้าง Slot
                     if (endTime >
                         activity.DailyEndTime)
                     {
                         break;
                     }
 
-                    // ข้ามช่วงพักกลางวัน
-                    // 12:00 - 13:00
+                    // =============================================
+                    // พักกลางวัน 12:00 - 13:00
+                    // =============================================
                     bool isLunch =
                         currentTime <
                             TimeSpan.FromHours(13)
@@ -168,7 +163,7 @@ namespace SmartSchedulePlanner.Services
         }
 
         // =========================================================
-        // สร้าง Population
+        // สร้าง Population เริ่มต้น
         // =========================================================
         private List<Chromosome> CreatePopulation(
             List<ActivitySubject> subjects,
@@ -184,17 +179,29 @@ namespace SmartSchedulePlanner.Services
                 var chromosome =
                     new Chromosome();
 
-                foreach (var slot in timeSlots)
+                // สร้างลำดับวิชาตาม Weight
+                var subjectSequence =
+                    CreateWeightedSubjectSequence(
+                        subjects,
+                        timeSlots.Count);
+
+                // สุ่มตำแหน่งบางส่วน
+                subjectSequence =
+                    ShuffleSubjectSequence(
+                        subjectSequence);
+
+                for (int j = 0;
+                     j < timeSlots.Count;
+                     j++)
                 {
-                    var selectedSubject =
-                        SelectSubjectByWeight(
-                            subjects);
+                    var slot =
+                        timeSlots[j];
 
                     chromosome.Genes.Add(
                         new Gene
                         {
                             SubjectName =
-                                selectedSubject.SubjectName,
+                                subjectSequence[j],
 
                             StudyDate =
                                 slot.StudyDate,
@@ -214,38 +221,187 @@ namespace SmartSchedulePlanner.Services
         }
 
         // =========================================================
-        // สุ่มวิชาตาม Weight
+        // สร้างลำดับวิชาตาม Weight
         // =========================================================
-        private ActivitySubject SelectSubjectByWeight(
-            List<ActivitySubject> subjects)
+        private List<string> CreateWeightedSubjectSequence(
+            List<ActivitySubject> subjects,
+            int totalSlots)
         {
+            var result =
+                new List<string>();
+
             int totalWeight =
                 subjects.Sum(x => x.Weight);
 
             if (totalWeight <= 0)
             {
-                return subjects[0];
-            }
+                totalWeight = subjects.Count;
 
-            int randomValue =
-                _random.Next(
-                    1,
-                    totalWeight + 1);
-
-            int currentWeight = 0;
-
-            foreach (var subject in subjects)
-            {
-                currentWeight +=
-                    subject.Weight;
-
-                if (randomValue <= currentWeight)
+                foreach (var subject in subjects)
                 {
-                    return subject;
+                    subject.Weight = 1;
                 }
             }
 
-            return subjects.Last();
+            // =====================================================
+            // คำนวณจำนวน Slot ของแต่ละวิชา
+            // =====================================================
+            var allocations =
+                new List<(ActivitySubject Subject,
+                          int Slots,
+                          double Fraction,
+                          int Index)>();
+
+            int assignedSlots = 0;
+
+            for (int i = 0;
+                 i < subjects.Count;
+                 i++)
+            {
+                var subject = subjects[i];
+
+                double exactSlots =
+                    (double)subject.Weight
+                    / totalWeight
+                    * totalSlots;
+
+                int slots =
+                    (int)Math.Floor(exactSlots);
+
+                double fraction =
+                    exactSlots - slots;
+
+                allocations.Add(
+                    (
+                        subject,
+                        slots,
+                        fraction,
+                        i
+                    ));
+
+                assignedSlots += slots;
+            }
+
+            // =====================================================
+            // แจก Slot ที่เหลือให้กับวิชาที่มีเศษมากที่สุด
+            // =====================================================
+            int remainingSlots =
+                totalSlots - assignedSlots;
+
+            var sortedAllocations =
+                allocations
+                    .OrderByDescending(x => x.Fraction)
+                    .ToList();
+
+            for (int i = 0;
+                 i < remainingSlots;
+                 i++)
+            {
+                var current =
+                    sortedAllocations[
+                        i % sortedAllocations.Count];
+
+                int index =
+                    allocations.FindIndex(
+                        x => x.Index == current.Index);
+
+                var old =
+                    allocations[index];
+
+                allocations[index] =
+                    (
+                        old.Subject,
+                        old.Slots + 1,
+                        old.Fraction,
+                        old.Index
+                    );
+            }
+
+            // =====================================================
+            // สร้าง Sequence
+            // =====================================================
+            foreach (var allocation in allocations)
+            {
+                for (int i = 0;
+                     i < allocation.Slots;
+                     i++)
+                {
+                    result.Add(
+                        allocation.Subject.SubjectName);
+                }
+            }
+
+            return result;
+        }
+
+        // =========================================================
+        // Shuffle Sequence
+        // =========================================================
+        private List<string> ShuffleSubjectSequence(
+            List<string> sequence)
+        {
+            var result =
+                sequence.ToList();
+
+            // Fisher-Yates Shuffle
+            for (int i = result.Count - 1;
+                 i > 0;
+                 i--)
+            {
+                int j =
+                    _random.Next(i + 1);
+
+                var temp =
+                    result[i];
+
+                result[i] =
+                    result[j];
+
+                result[j] =
+                    temp;
+            }
+
+            // พยายามลดวิชาเดิมติดกัน
+            return ImproveSequence(result);
+        }
+
+        // =========================================================
+        // ปรับ Sequence ไม่ให้วิชาเดิมติดกันมากเกินไป
+        // =========================================================
+        private List<string> ImproveSequence(
+            List<string> sequence)
+        {
+            for (int i = 1;
+                 i < sequence.Count;
+                 i++)
+            {
+                if (sequence[i] != sequence[i - 1])
+                {
+                    continue;
+                }
+
+                // หา Element หลังจากตำแหน่งปัจจุบัน
+                for (int j = i + 1;
+                     j < sequence.Count;
+                     j++)
+                {
+                    if (sequence[j] != sequence[i - 1])
+                    {
+                        var temp =
+                            sequence[i];
+
+                        sequence[i] =
+                            sequence[j];
+
+                        sequence[j] =
+                            temp;
+
+                        break;
+                    }
+                }
+            }
+
+            return sequence;
         }
 
         // =========================================================
@@ -260,39 +416,55 @@ namespace SmartSchedulePlanner.Services
                 return 0;
             }
 
-            double score = 100;
+            double score = 1000;
 
             int totalSlots =
                 chromosome.Genes.Count;
 
-            // -----------------------------------------------------
+            // =====================================================
             // 1. ตรวจสอบ Weight
-            // -----------------------------------------------------
-            foreach (var subject in subjects)
+            // =====================================================
+            int totalWeight =
+                subjects.Sum(x => x.Weight);
+
+            if (totalWeight > 0)
             {
-                int actualCount =
-                    chromosome.Genes.Count(
-                        x =>
-                            x.SubjectName ==
-                            subject.SubjectName);
+                foreach (var subject in subjects)
+                {
+                    // จำนวน Slot ที่วิชานี้ได้รับจริง
+                    int actualSlots =
+                        chromosome.Genes.Count(
+                            x =>
+                                x.SubjectName ==
+                                subject.SubjectName);
 
-                double actualPercentage =
-                    (double)actualCount
-                    / totalSlots
-                    * 100;
+                    // เปอร์เซ็นต์ที่ได้จริง
+                    double actualPercentage =
+                        (double)actualSlots
+                        / totalSlots
+                        * 100;
 
-                double difference =
-                    Math.Abs(
-                        actualPercentage
-                        - subject.Weight);
+                    // เปอร์เซ็นต์ที่ต้องการ
+                    double targetPercentage =
+                        (double)subject.Weight
+                        / totalWeight
+                        * 100;
 
-                // ยิ่งใกล้ Weight ยิ่งดี
-                score -= difference * 0.5;
+                    // ความแตกต่าง
+                    double difference =
+                        Math.Abs(
+                            actualPercentage
+                            - targetPercentage);
+
+                    // ยิ่งใกล้ Weight ยิ่งได้คะแนนสูง
+                    score -=
+                        difference * 20;
+                }
             }
 
-            // -----------------------------------------------------
-            // 2. ห้ามวิชาเดียวกันติดกัน
-            // -----------------------------------------------------
+            // =====================================================
+            // 2. ตรวจสอบวิชาเดียวกันติดกัน
+            // =====================================================
             for (int i = 1;
                  i < chromosome.Genes.Count;
                  i++)
@@ -303,14 +475,13 @@ namespace SmartSchedulePlanner.Services
                     chromosome.Genes[i - 1].SubjectName
                 )
                 {
-                    score -= 8;
+                    score -= 30;
                 }
             }
 
-            // -----------------------------------------------------
-            // 3. ถ้าวิชาเดียวกันติดกัน 3 ช่องขึ้นไป
-            // ลงโทษเพิ่ม
-            // -----------------------------------------------------
+            // =====================================================
+            // 3. ตรวจสอบวิชาเดียวกันติดกัน 3 Slot ขึ้นไป
+            // =====================================================
             int consecutiveCount = 1;
 
             for (int i = 1;
@@ -327,7 +498,7 @@ namespace SmartSchedulePlanner.Services
 
                     if (consecutiveCount >= 3)
                     {
-                        score -= 10;
+                        score -= 50;
                     }
                 }
                 else
@@ -336,21 +507,58 @@ namespace SmartSchedulePlanner.Services
                 }
             }
 
-            // -----------------------------------------------------
-            // 4. ให้คะแนนถ้ามีการกระจายวิชา
-            // -----------------------------------------------------
-            var uniqueSubjects =
+            // =====================================================
+            // 4. ให้คะแนนเมื่อมีการกระจายหลายวิชา
+            // =====================================================
+            int uniqueSubjects =
                 chromosome.Genes
                     .Select(x => x.SubjectName)
                     .Distinct()
                     .Count();
 
             score +=
-                uniqueSubjects * 2;
+                uniqueSubjects * 10;
 
-            // -----------------------------------------------------
-            // ป้องกัน Fitness ติดลบ
-            // -----------------------------------------------------
+            // =====================================================
+            // 5. ตรวจสอบ Time Slot ซ้ำ
+            // =====================================================
+            int duplicateSlots =
+                chromosome.Genes
+                    .GroupBy(x => new
+                    {
+                        x.StudyDate,
+                        x.StartTime,
+                        x.EndTime
+                    })
+                    .Count(x => x.Count() > 1);
+
+            // ถ้ามีเวลาซ้ำ ให้ลงโทษหนัก
+            score -=
+                duplicateSlots * 100;
+
+            // =====================================================
+            // 6. ตรวจสอบว่าทุกวิชาที่มี Weight ถูกใช้งาน
+            // =====================================================
+            foreach (var subject in subjects)
+            {
+                bool exists =
+                    chromosome.Genes.Any(
+                        x =>
+                            x.SubjectName ==
+                            subject.SubjectName);
+
+                if (!exists)
+                {
+                    // ถ้า Weight มากแต่ไม่มีในตาราง
+                    // ลงโทษมากกว่า Weight น้อย
+                    score -=
+                        subject.Weight * 2;
+                }
+            }
+
+            // =====================================================
+            // 7. ป้องกัน Fitness ติดลบ
+            // =====================================================
             if (score < 0)
             {
                 score = 0;
@@ -431,7 +639,7 @@ namespace SmartSchedulePlanner.Services
                 return;
             }
 
-            // โอกาส Mutation 20%
+            // Mutation 20%
             if (
                 _random.NextDouble()
                 >
@@ -440,21 +648,56 @@ namespace SmartSchedulePlanner.Services
                 return;
             }
 
-            // เลือก Gene แบบสุ่ม
+            // สุ่มตำแหน่ง Gene
             int index =
                 _random.Next(
                     chromosome.Genes.Count);
 
-            // เลือกวิชาใหม่ตาม Weight
+            // เลือกวิชาตาม Weight
             var selectedSubject =
                 SelectSubjectByWeight(
                     subjects);
 
-            // เปลี่ยนเฉพาะวิชา
-            // วันและเวลาของ Slot เดิมจะไม่เปลี่ยน
+            // เปลี่ยนเฉพาะ Subject
+            // Time Slot เดิมยังคงอยู่
             chromosome.Genes[index]
                 .SubjectName =
                     selectedSubject.SubjectName;
+        }
+
+        // =========================================================
+        // เลือกวิชาตาม Weight
+        // =========================================================
+        private ActivitySubject SelectSubjectByWeight(
+            List<ActivitySubject> subjects)
+        {
+            int totalWeight =
+                subjects.Sum(x => x.Weight);
+
+            if (totalWeight <= 0)
+            {
+                return subjects[0];
+            }
+
+            int randomValue =
+                _random.Next(
+                    1,
+                    totalWeight + 1);
+
+            int currentWeight = 0;
+
+            foreach (var subject in subjects)
+            {
+                currentWeight +=
+                    subject.Weight;
+
+                if (randomValue <= currentWeight)
+                {
+                    return subject;
+                }
+            }
+
+            return subjects.Last();
         }
     }
 }
