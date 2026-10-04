@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using SmartSchedulePlanner.Data;
 using SmartSchedulePlanner.Models;
+using SmartSchedulePlanner.Services;
 
 namespace SmartSchedulePlanner.Controllers
 {
@@ -68,6 +69,26 @@ namespace SmartSchedulePlanner.Controllers
                 ModelState.AddModelError(
                     nameof(activity.EndDate),
                     "วันที่เริ่มต้องไม่หลังวันที่สิ้นสุด");
+            }
+
+            // ตรวจว่าชนกับกิจกรรมอื่นของ User คนนี้หรือไม่
+            if (ModelState.IsValid)
+            {
+                var otherActivities = _context.StudyActivities
+                    .AsNoTracking()
+                    .Where(x => x.UserId == userId.Value)
+                    .ToList();
+
+                var conflict = ActivityConflictChecker
+                    .FindConflict(activity, otherActivities);
+
+                if (conflict != null)
+                {
+                    ModelState.AddModelError(
+                        string.Empty,
+                        ActivityConflictChecker.Describe(conflict) +
+                        " กรุณาเปลี่ยนช่วงวันที่หรือเวลาอ่าน");
+                }
             }
 
             if (!ModelState.IsValid)

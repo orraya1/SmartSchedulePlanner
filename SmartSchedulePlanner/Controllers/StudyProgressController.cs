@@ -13,11 +13,25 @@ namespace SmartSchedulePlanner.Controllers
             _context = context;
         }
 
+        // ดึง Schedule เฉพาะที่เป็นของ User ที่ Login อยู่
+        private Schedule? GetOwnedSchedule(int scheduleId, int userId)
+        {
+            return _context.Schedules
+                .FirstOrDefault(x =>
+                    x.Id == scheduleId &&
+                    x.StudyActivity != null &&
+                    x.StudyActivity.UserId == userId);
+        }
+
         // GET: StudyProgress/Create?scheduleId=1
         public IActionResult Create(int scheduleId)
         {
-            var schedule = _context.Schedules
-                .FirstOrDefault(x => x.Id == scheduleId);
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            if (userId == null)
+                return RedirectToAction("Login", "Account");
+
+            var schedule = GetOwnedSchedule(scheduleId, userId.Value);
 
             if (schedule == null)
                 return NotFound();
@@ -48,8 +62,12 @@ namespace SmartSchedulePlanner.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Create(StudyProgress model)
         {
-            var schedule = _context.Schedules
-                .FirstOrDefault(x => x.Id == model.ScheduleId);
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            if (userId == null)
+                return RedirectToAction("Login", "Account");
+
+            var schedule = GetOwnedSchedule(model.ScheduleId, userId.Value);
 
             if (schedule == null)
                 return NotFound();
@@ -114,6 +132,9 @@ namespace SmartSchedulePlanner.Controllers
 
             if (existing == null)
             {
+                // ไม่ใช้ Id ที่ส่งมาจากหน้าเว็บ
+                model.Id = 0;
+
                 model.UpdatedAt = DateTime.Now;
 
                 _context.StudyProgresses.Add(model);
@@ -144,10 +165,46 @@ namespace SmartSchedulePlanner.Controllers
 
             _context.SaveChanges();
 
+            // ตรวจสอบว่ากิจกรรมทำครบทุกตารางแล้วหรือยัง
+            var activityId = schedule.StudyActivityId;
+
+            var activitySchedules = _context.Schedules
+                .Where(x => x.StudyActivityId == activityId)
+                .ToList();
+
+            var activityScheduleIds = activitySchedules
+                .Select(x => x.Id)
+                .ToList();
+
+            var activityProgress = _context.StudyProgresses
+                .Where(x =>
+                    activityScheduleIds.Contains(x.ScheduleId))
+                .ToList();
+
+            bool isActivityCompleted =
+                activitySchedules.Count > 0 &&
+                activitySchedules.All(schedule =>
+                {
+                    var progress = activityProgress
+                        .FirstOrDefault(x =>
+                            x.ScheduleId == schedule.Id);
+
+                    return progress != null &&
+                           progress.IsCompleted &&
+                           progress.ProgressPercent == 100;
+                });
+
+            var activity = _context.StudyActivities
+                .FirstOrDefault(x => x.Id == activityId);
+
+            if (activity != null)
+            {
+                activity.IsCompleted = isActivityCompleted;
+                _context.SaveChanges();
+            }
 
             TempData["Success"] =
                 "บันทึกผลการอ่านเรียบร้อยแล้ว";
-
 
             return RedirectToAction(
                 "ViewSchedule",

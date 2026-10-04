@@ -28,5 +28,6 @@ namespace SmartSchedulePlanner.Models
             = new List<ActivitySubject>();
 
         public bool IsScheduleConfirmed { get; set; } = false;
+        public bool IsCompleted { get; set; } = false;
     }
 }

@@ -329,14 +329,21 @@
             <!-- Generate Schedule -->
             @if (totalWeight == 100 && subjectCount > 0)
             {
-                <a asp-controller="Schedule"
-                   asp-action="Generate"
-                   asp-route-id="@ViewBag.ActivityId"
-                   class="generate-btn">
+                <form asp-controller="Schedule"
+                      asp-action="Generate"
+                      asp-route-id="@ViewBag.ActivityId"
+                      method="post"
+                      style="display:inline;">
 
-                    Generate Schedule
+                    <button type="submit"
+                            class="generate-btn"
+                            style="border:none; font:inherit; cursor:pointer;">
 
-                </a>
+                        Generate Schedule
+
+                    </button>
+
+                </form>
             }
             else
             {

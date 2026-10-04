@@ -1,12 +1,15 @@
 ﻿@{
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
 
-    var subjectDistribution =
-        ViewBag.SubjectDistribution
+    var activityAnalytics =
+        ViewBag.ActivityAnalytics
         as IEnumerable<dynamic>;
 
     var totalStudyHours =
         (double)ViewBag.TotalStudyHours;
+
+    var totalSubjects =
+    (int)ViewBag.TotalSubjects;
 }
 
 <style>
@@ -34,6 +37,10 @@
             color: #777;
         }
 
+    /* =========================
+           SUMMARY
+           ========================= */
+
     .analytics-summary {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -59,23 +66,67 @@
         color: #777;
     }
 
-    .distribution-card {
+    /* =========================
+           ACTIVITY
+           ========================= */
+
+    .activity-analytics {
         background: #ffffff;
         border-radius: 18px;
         padding: 28px;
+        margin-bottom: 25px;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     }
 
-    .distribution-title {
-        font-size: 22px;
+    .activity-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 22px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #eeeeee;
+    }
+
+    .activity-name {
+        font-size: 21px;
         font-weight: 700;
         color: #333;
-        margin-bottom: 25px;
     }
+
+    .activity-period {
+        font-size: 12px;
+        color: #999;
+        margin-top: 4px;
+    }
+
+    .activity-hours {
+        padding: 8px 12px;
+        border-radius: 9px;
+        background: #f3f6f1;
+        color: #63765d;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+
+    .distribution-title {
+        font-size: 17px;
+        font-weight: 600;
+        color: #444;
+        margin-bottom: 20px;
+    }
+
+    /* =========================
+           DISTRIBUTION
+           ========================= */
 
     .distribution-item {
         margin-bottom: 25px;
     }
+
+        .distribution-item:last-child {
+            margin-bottom: 0;
+        }
 
     .distribution-top {
         display: flex;
@@ -85,7 +136,7 @@
     }
 
     .distribution-subject {
-        font-size: 17px;
+        font-size: 16px;
         font-weight: 600;
         color: #444;
     }
@@ -118,16 +169,239 @@
         color: #888;
     }
 
+    /* =========================
+           EMPTY
+           ========================= */
+
+    .analytics-empty {
+        background: #ffffff;
+        border-radius: 18px;
+        padding: 40px;
+        text-align: center;
+        color: #999;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    /* =========================
+           PROGRESS SUMMARY
+           ========================= */
+
+    .progress-summary {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-top: 25px;
+        margin-bottom: 25px;
+    }
+
+    .progress-box {
+        padding: 14px;
+        border-radius: 10px;
+        text-align: center;
+        border: none;
+        cursor: pointer;
+        font-family: inherit;
+        transition: 0.2s;
+    }
+
+        .progress-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+
+    .progress-box-number {
+        font-size: 22px;
+        font-weight: 600;
+        color: #444;
+    }
+
+    .progress-box-label {
+        margin-top: 4px;
+        font-size: 12px;
+        color: #666;
+    }
+
+    .progress-complete-box {
+        background: #e8f2e3;
+    }
+
+    .progress-partial-box {
+        background: #f8efd9;
+    }
+
+    .progress-none-box {
+        background: #f5e0e0;
+    }
+
+    .progress-not-recorded-box {
+        background: #eeeeee;
+    }
+    /* =========================
+           RESPONSIVE
+           ========================= */
+
+    @@media (max-width: 700px) {
+
+        .analytics-page {
+            padding: 15px;
+        }
+
+        .activity-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .activity-hours {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .distribution-top {
+            gap: 10px;
+        }
+
+        .distribution-value {
+            text-align: right;
+        }
+
+        .progress-summary {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    /* =========================
+           PROGRESS MODAL
+           ========================= */
+
+    .progress-modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.35);
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+        .progress-modal.show {
+            display: flex;
+        }
+
+    .progress-modal-card {
+        width: 100%;
+        max-width: 650px;
+        max-height: 80vh;
+        overflow-y: auto;
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 24px;
+        box-sizing: border-box;
+        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.15);
+    }
+
+    .progress-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+
+    .progress-modal-title {
+        font-size: 19px;
+        font-weight: 600;
+        color: #444;
+    }
+
+    .progress-close {
+        width: 30px;
+        height: 30px;
+        border: none;
+        border-radius: 50%;
+        background: #f3f3f3;
+        color: #666;
+        font-size: 18px;
+        cursor: pointer;
+    }
+
+        .progress-close:hover {
+            background: #e8e8e8;
+        }
+
+    .progress-detail-item {
+        background: #faf8f4;
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 10px;
+    }
+
+        .progress-detail-item:last-child {
+            margin-bottom: 0;
+        }
+
+    .progress-detail-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .progress-detail-subject {
+        font-size: 14px;
+        font-weight: 600;
+        color: #444;
+    }
+
+    .progress-detail-date {
+        font-size: 12px;
+        color: #888;
+    }
+
+    .progress-detail-time {
+        margin-top: 5px;
+        font-size: 12px;
+        color: #888;
+    }
+
+    .progress-detail-percent {
+        margin-top: 8px;
+        font-size: 12px;
+        color: #666;
+    }
+
+    .progress-detail-note {
+        margin-top: 8px;
+        padding: 8px 10px;
+        background: #ffffff;
+        border-radius: 7px;
+        font-size: 12px;
+        color: #666;
+    }
+
+    .progress-empty {
+        text-align: center;
+        padding: 30px 10px;
+        color: #999;
+        font-size: 13px;
+    }
+
 </style>
 
 
 <div class="analytics-page">
 
-    <!-- Header -->
+    <!-- =========================
+         HEADER
+         ========================= -->
 
     <div class="analytics-header">
 
-        <h1>Analytics</h1>
+        <h1>
+            Analytics
+        </h1>
 
         <p>
             วิเคราะห์การจัดสรรเวลาอ่านหนังสือ
@@ -137,18 +411,24 @@
     </div>
 
 
-    <!-- Summary -->
+    <!-- =========================
+         SUMMARY
+         ========================= -->
 
     <div class="analytics-summary">
 
         <div class="analytics-summary-card">
 
             <div class="analytics-summary-number">
+
                 @totalStudyHours.ToString("0.##")h
+
             </div>
 
             <div class="analytics-summary-title">
+
                 ชั่วโมงอ่านทั้งหมด
+
             </div>
 
         </div>
@@ -157,11 +437,15 @@
         <div class="analytics-summary-card">
 
             <div class="analytics-summary-number">
-                @(subjectDistribution?.Count() ?? 0)
+
+                @totalSubjects
+
             </div>
 
             <div class="analytics-summary-title">
+
                 วิชาทั้งหมด
+
             </div>
 
         </div>
@@ -169,78 +453,477 @@
     </div>
 
 
-    <!-- Subject Distribution -->
-    @if (subjectDistribution != null &&
-    subjectDistribution.Any())
+    <!-- =========================
+         ACTIVITY ANALYTICS
+         ========================= -->
+    @if (activityAnalytics != null &&
+    activityAnalytics.Any())
     {
-        <div class="distribution-card">
 
-            <div class="distribution-title">
-                การกระจายเวลาอ่านตาม Weight
-            </div>
+        @foreach (var activity in activityAnalytics)
+        {
 
+            <div class="activity-analytics">
 
-            @foreach (var item in subjectDistribution)
-            {
-                var percentage =
-                (double)item.Percentage;
+                <!-- Activity Header -->
 
-                var barWidth =
-                Math.Min(percentage, 100);
+                <div class="activity-header">
 
+                    <div>
 
-                <div class="distribution-item">
+                        <div class="activity-name">
 
-                    <div class="distribution-top">
+                            @activity.ActivityName
 
-                        <div class="distribution-subject">
-                            @item.SubjectName
                         </div>
 
-                        <div class="distribution-value">
+                        <div class="activity-period">
 
-                            @percentage.ToString("0.0")%
-                            /
-                            @item.Weight%
+                            @activity.StartDate.ToString("dd/MM/yyyy")
+                            -
+                            @activity.EndDate.ToString("dd/MM/yyyy")
 
                         </div>
 
                     </div>
 
 
-                    <div class="distribution-bar-background">
+                    <div class="activity-hours">
 
-                        <div class="distribution-bar"
-                             style="
-                                width:
-                                @barWidth.ToString(
-                                    "0.##",
-                                    System.Globalization.CultureInfo.InvariantCulture
-                                )%;
-                                     ">
-                        </div>
-
-                    </div>
-
-
-                    <div class="distribution-info">
-
-                        <span>
-                            ได้จริง
-                            @item.Hours.ToString("0.##")
-                            ชั่วโมง
-                        </span>
-
-                        <span>
-                            Weight @item.Weight%
-                        </span>
+                        @activity.TotalStudyHours.ToString("0.##")
+                        ชั่วโมง
 
                     </div>
 
                 </div>
-            }
+
+                <!-- Progress Summary -->
+
+                <div class="progress-summary">
+
+                    <button type="button"
+                            class="progress-box progress-complete-box"
+                            onclick="showProgress('@activity.ActivityId','completed')">
+
+                        <div class="progress-box-number">
+                            @activity.CompletedCount
+                        </div>
+
+                        <div class="progress-box-label">
+                            ✓ ทำครบ
+                        </div>
+
+                    </button>
+
+
+                    <button type="button"
+                            class="progress-box progress-partial-box"
+                            onclick="showProgress('@activity.ActivityId','partial')">
+
+                        <div class="progress-box-number">
+                            @activity.PartialCount
+                        </div>
+
+                        <div class="progress-box-label">
+                            ◐ ทำบางส่วน
+                        </div>
+
+                    </button>
+
+
+                    <button type="button"
+                            class="progress-box progress-none-box"
+                            onclick="showProgress('@activity.ActivityId','notdone')">
+
+                        <div class="progress-box-number">
+                            @activity.NotDoneCount
+                        </div>
+
+                        <div class="progress-box-label">
+                            × ไม่ได้อ่าน
+                        </div>
+
+                    </button>
+
+
+                    <button type="button"
+                            class="progress-box progress-not-recorded-box"
+                            onclick="showProgress('@activity.ActivityId','notrecorded')">
+
+                        <div class="progress-box-number">
+                            @activity.NotRecordedCount
+                        </div>
+
+                        <div class="progress-box-label">
+                            ○ ยังไม่บันทึก
+                        </div>
+
+                    </button>
+
+                </div>
+
+                <!-- Distribution -->
+
+                <div class="distribution-title">
+
+                    การกระจายเวลาอ่านตาม Weight
+
+                </div>
+
+
+                @if (activity.SubjectDistribution != null &&
+               activity.SubjectDistribution.Count > 0)
+                {
+
+                    @foreach (var item in activity.SubjectDistribution)
+                    {
+
+                        var percentage =
+                        (double)item.Percentage;
+
+                        var barWidth =
+                        Math.Min(percentage, 100);
+
+
+                        <div class="distribution-item">
+
+                            <div class="distribution-top">
+
+                                <div class="distribution-subject">
+
+                                    @item.SubjectName
+
+                                </div>
+
+                                <div class="distribution-value">
+
+                                    @percentage.ToString("0.0")%
+                                    /
+                                    @item.Weight%
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="distribution-bar-background">
+
+                                <div class="distribution-bar"
+                                     style="
+                                        width:
+                                        @barWidth.ToString(
+                                            "0.##",
+                                            System.Globalization.CultureInfo.InvariantCulture
+                                        )%;
+                                                     ">
+                                </div>
+
+                            </div>
+
+
+                            <div class="distribution-info">
+
+                                <span>
+
+                                    ได้จริง
+                                    @item.Hours.ToString("0.##")
+                                    ชั่วโมง
+
+                                </span>
+
+                                <span>
+
+                                    Weight @item.Weight%
+
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    }
+
+                }
+                else
+                {
+
+                    <div class="analytics-empty">
+
+                        ยังไม่มีข้อมูลตารางสำหรับกิจกรรมนี้
+
+                    </div>
+
+                }
+
+                <!-- =========================
+                HIDDEN PROGRESS DETAILS
+                ========================= -->
+
+                <div id="progress-@activity.ActivityId-completed"
+                     style="display:none;">
+
+                    @if (activity.CompletedDetails.Count > 0)
+                    {
+                        @foreach (var item in activity.CompletedDetails)
+                        {
+                            <div class="progress-detail-item">
+
+                                <div class="progress-detail-top">
+
+                                    <div class="progress-detail-subject">
+                                        @item.SubjectName
+                                    </div>
+
+                                    <div class="progress-detail-date">
+                                        @item.StudyDate.ToString("dd/MM/yyyy")
+                                    </div>
+
+                                </div>
+
+                                <div class="progress-detail-time">
+
+                                    @item.StartTime.ToString(@"hh\:mm")
+                                    -
+                                    @item.EndTime.ToString(@"hh\:mm")
+
+                                </div>
+
+                                <div class="progress-detail-percent">
+
+                                    ทำได้ @item.ProgressPercent%
+                                    ·
+                                    อ่านจริง @item.ActualMinutes นาที
+
+                                </div>
+
+                                @if (!string.IsNullOrWhiteSpace(item.Note))
+                                {
+                                    <div class="progress-detail-note">
+                                        📝 @item.Note
+                                    </div>
+                                }
+
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="progress-empty">
+                            ยังไม่มีรายการ
+                        </div>
+                    }
+
+                </div>
+
+
+                <div id="progress-@activity.ActivityId-partial"
+                     style="display:none;">
+
+                    @if (activity.PartialDetails.Count > 0)
+                    {
+                        @foreach (var item in activity.PartialDetails)
+                        {
+                            <div class="progress-detail-item">
+
+                                <div class="progress-detail-top">
+
+                                    <div class="progress-detail-subject">
+                                        @item.SubjectName
+                                    </div>
+
+                                    <div class="progress-detail-date">
+                                        @item.StudyDate.ToString("dd/MM/yyyy")
+                                    </div>
+
+                                </div>
+
+                                <div class="progress-detail-time">
+
+                                    @item.StartTime.ToString(@"hh\:mm")
+                                    -
+                                    @item.EndTime.ToString(@"hh\:mm")
+
+                                </div>
+
+                                <div class="progress-detail-percent">
+
+                                    ทำได้ @item.ProgressPercent%
+                                    ·
+                                    อ่านจริง @item.ActualMinutes นาที
+
+                                </div>
+
+                                @if (!string.IsNullOrWhiteSpace(item.Note))
+                                {
+                                    <div class="progress-detail-note">
+                                        📝 @item.Note
+                                    </div>
+                                }
+
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="progress-empty">
+                            ยังไม่มีรายการ
+                        </div>
+                    }
+
+                </div>
+
+
+                <div id="progress-@activity.ActivityId-notdone"
+                     style="display:none;">
+
+                    @if (activity.NotDoneDetails.Count > 0)
+                    {
+                        @foreach (var item in activity.NotDoneDetails)
+                        {
+                            <div class="progress-detail-item">
+
+                                <div class="progress-detail-top">
+
+                                    <div class="progress-detail-subject">
+                                        @item.SubjectName
+                                    </div>
+
+                                    <div class="progress-detail-date">
+                                        @item.StudyDate.ToString("dd/MM/yyyy")
+                                    </div>
+
+                                </div>
+
+                                <div class="progress-detail-time">
+
+                                    @item.StartTime.ToString(@"hh\:mm")
+                                    -
+                                    @item.EndTime.ToString(@"hh\:mm")
+
+                                </div>
+
+                                <div class="progress-detail-percent">
+
+                                    ทำได้ @item.ProgressPercent%
+                                    ·
+                                    อ่านจริง @item.ActualMinutes นาที
+
+                                </div>
+
+                                @if (!string.IsNullOrWhiteSpace(item.Note))
+                                {
+                                    <div class="progress-detail-note">
+                                        📝 @item.Note
+                                    </div>
+                                }
+
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="progress-empty">
+                            ยังไม่มีรายการ
+                        </div>
+                    }
+
+                </div>
+
+
+                <div id="progress-@activity.ActivityId-notrecorded"
+                     style="display:none;">
+
+                    @if (activity.NotRecordedDetails.Count > 0)
+                    {
+                        @foreach (var item in activity.NotRecordedDetails)
+                        {
+                            <div class="progress-detail-item">
+
+                                <div class="progress-detail-top">
+
+                                    <div class="progress-detail-subject">
+                                        @item.SubjectName
+                                    </div>
+
+                                    <div class="progress-detail-date">
+                                        @item.StudyDate.ToString("dd/MM/yyyy")
+                                    </div>
+
+                                </div>
+
+                                <div class="progress-detail-time">
+
+                                    @item.StartTime.ToString(@"hh\:mm")
+                                    -
+                                    @item.EndTime.ToString(@"hh\:mm")
+
+                                </div>
+
+                                <div class="progress-detail-percent">
+
+                                    ยังไม่ได้บันทึกผลการอ่าน
+
+                                </div>
+
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="progress-empty">
+                            ไม่มีรายการที่ยังไม่บันทึก
+                        </div>
+                    }
+
+                </div>
+
+            </div>
+
+        }
+
+    }
+    else
+    {
+
+        <div class="analytics-empty">
+
+            ยังไม่มีข้อมูล Analytics
 
         </div>
+
     }
+
+</div>
+
+<!-- =========================
+PROGRESS MODAL
+========================= -->
+
+<div id="progressModal"
+     class="progress-modal"
+     onclick="closeProgressOutside(event)">
+
+    <div class="progress-modal-card"
+         onclick="event.stopPropagation()">
+
+        <div class="progress-modal-header">
+
+            <div id="progressModalTitle"
+                 class="progress-modal-title">
+            </div>
+
+            <button type="button"
+                    class="progress-close"
+                    onclick="closeProgress()">
+                ×
+            </button>
+
+        </div>
+
+        <div id="progressModalContent"
+             class="progress-modal-content">
+        </div>
+
+    </div>
 
 </div>

@@ -36,6 +36,9 @@ namespace SmartSchedulePlanner.Controllers
         }
 
         // สร้าง Schedule ด้วย Genetic Algorithm
+        // (เปลี่ยนเป็น POST เพราะมีการลบ/สร้างข้อมูลในฐานข้อมูล)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Generate(int id)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
@@ -50,6 +53,9 @@ namespace SmartSchedulePlanner.Controllers
                     a.Id == id &&
                     a.UserId == userId.Value);
 
+            if (activity == null)
+                return NotFound();
+
             if (activity.IsScheduleConfirmed)
             {
                 TempData["Error"] =
@@ -59,9 +65,6 @@ namespace SmartSchedulePlanner.Controllers
                     "ViewSchedule",
                     new { id });
             }
-
-            if (activity == null)
-                return NotFound();
 
             if (!activity.ActivitySubjects.Any())
             {
@@ -87,10 +90,49 @@ namespace SmartSchedulePlanner.Controllers
                     new { id });
             }
 
+            // ตรวจว่าช่วงวันที่/เวลาอ่านชนกับกิจกรรมอื่นของ User คนนี้หรือไม่
+            var otherActivities = _context.StudyActivities
+                .AsNoTracking()
+                .Where(x =>
+                    x.UserId == userId.Value &&
+                    x.Id != id)
+                .ToList();
+
+            var conflict = ActivityConflictChecker
+                .FindConflict(activity, otherActivities);
+
+            if (conflict != null)
+            {
+                TempData["Error"] =
+                    ActivityConflictChecker.Describe(conflict) +
+                    " จึงไม่สามารถสร้างตารางได้ " +
+                    "กรุณาลบกิจกรรมใดกิจกรรมหนึ่ง " +
+                    "หรือสร้างกิจกรรมใหม่ที่ไม่ซ้อนเวลากัน";
+
+                return RedirectToAction(
+                    "Details",
+                    "StudyActivity",
+                    new { id });
+            }
+
             // Generate ตารางด้วย Genetic Algorithm
             var result = _ga.Generate(
                 activity,
                 activity.ActivitySubjects.ToList());
+
+            // ไม่มีช่วงเวลาอ่านให้สร้างตารางเลย
+            // ไม่ลบตารางเดิม เพื่อไม่ให้ข้อมูลหาย
+            if (result.Genes.Count == 0)
+            {
+                TempData["Error"] =
+                    "ไม่สามารถสร้างตารางได้ เพราะไม่มีช่วงเวลาอ่านที่ใช้ได้ " +
+                    "(ช่วงเวลาอ่านต่อวันสั้นกว่า 1 ชั่วโมง หรืออยู่ในช่วงพักเที่ยง)";
+
+                return RedirectToAction(
+                    "Details",
+                    "StudyActivity",
+                    new { id });
+            }
 
             // ลบตารางเก่าของ Activity นี้ก่อน
             var oldSchedules = _context.Schedules
@@ -130,8 +172,16 @@ namespace SmartSchedulePlanner.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult ConfirmSchedule(int id)
         {
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            if (userId == null)
+                return RedirectToAction("Login", "Account");
+
+            // ตรวจสอบว่า Activity เป็นของ User ที่ Login อยู่
             var activity = _context.StudyActivities
-                .FirstOrDefault(x => x.Id == id);
+                .FirstOrDefault(x =>
+                    x.Id == id &&
+                    x.UserId == userId.Value);
 
             if (activity == null)
                 return NotFound();
